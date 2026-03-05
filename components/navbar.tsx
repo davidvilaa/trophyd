@@ -10,19 +10,37 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
   const [isMenuOpen, setIsMenuOpen] = useState(false); 
+  const [username, setUsername] = useState<string | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+      
+      if (session?.user) {
+        setUser(session.user);
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('nickname') 
+          .eq('id', session.user.id)
+          .maybeSingle();
+          
+        if (error) {
+          console.error("Error al sacar el perfil:", error);
+        }
+          
+        setUsername(profile?.nickname || session.user.email);
+      } else {
+        setUser(null);
+        setUsername(null);
+      }
       setLoading(false);
     };
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+      checkUser();
     });
 
     return () => subscription.unsubscribe();
@@ -33,7 +51,7 @@ export default function Navbar() {
     router.push("/");
   };
 
-  const displayName = user?.user_metadata?.username || user?.email;
+  const displayName = username;
 
   return (
     <nav style={{
@@ -50,9 +68,9 @@ export default function Navbar() {
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         
         <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-          <Gamepad2 style={{ width: "32px", height: "32px", color: "#0044aa", filter: "drop-shadow(0 2px 2px rgba(255,255,255,0.6))" }} />
+          <Gamepad2 style={{ width: "32px", height: "32px", color: "#8CB4BA", filter: "drop-shadow(0 2px 2px rgba(255,255,255,0.6))" }} />
           <span style={{ fontSize: "1.5rem", fontWeight: "900", color: "#000", textShadow: "0 0 5px rgba(255,255,255,0.8), 0 1px 1px rgba(255,255,255,1)" }}>
-            Trophy<span style={{ color: "#0044aa" }}>d</span>
+            Trophy<span style={{ color: "#8CB4BA" }}>d</span>
           </span>
         </Link>
 

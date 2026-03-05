@@ -40,7 +40,7 @@ export default function RegisterPage() {
         .insert([
           {
             id: data.user.id,
-            username: username,
+            nickname: username,
           }
         ]);
 
@@ -51,7 +51,6 @@ export default function RegisterPage() {
       }
     }
 
-    alert("¡Cuenta creada con éxito, tete!");
     router.push("/"); 
   };
 
