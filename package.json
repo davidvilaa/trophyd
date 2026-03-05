@@ -11,6 +11,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",
+    "7.css": "^0.21.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
@@ -18,6 +19,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-draggable": "^4.5.0",
     "supabase": "^2.76.17",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7"

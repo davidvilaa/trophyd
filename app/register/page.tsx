@@ -1,12 +1,10 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Gamepad2 } from "lucide-react";
+import Draggable from "react-draggable";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,6 +15,8 @@ export default function RegisterPage() {
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const nodeRef = useRef(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,93 +40,85 @@ export default function RegisterPage() {
         .insert([
           {
             id: data.user.id,
-            nickname: username,
+            username: username,
           }
         ]);
 
       if (profileError) {
-        console.error("Error creando el perfil:", profileError);
-        setError("La cuenta se creó, pero hubo un error al crear el perfil.");
+        setError("La cuenta se creó, pero hubo un error al guardar el nombre de usuario.");
         setLoading(false);
         return;
       }
     }
 
+    alert("¡Cuenta creada con éxito, tete!");
     router.push("/"); 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative bg-[url('https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
-      <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm z-0"></div>
+    <div className="min-h-screen flex items-center justify-center bg-[url('https://wallpapers.com/images/hd/artistic-blue-windows-7-cover-v0qwgn3ypat2bloy.jpg')] bg-cover bg-center overflow-hidden">
+      
+      <Draggable handle=".title-bar" nodeRef={nodeRef}>
+        
+        <div ref={nodeRef} className="window glass active" style={{ width: "100%", maxWidth: "550px", position: "absolute" }}>
+          
+          <div className="title-bar" style={{ cursor: "grab" }}>
+            <div className="title-bar-text">Registro de Completista - Trophyd</div>
+            <div className="title-bar-controls">
+              <button aria-label="Minimize"></button>
+              <button aria-label="Maximize"></button>
+              <button aria-label="Close"></button>
+            </div>
+          </div>
 
-      <div className="relative z-10 w-full max-w-md p-8 bg-zinc-900/80 border border-border shadow-2xl backdrop-blur-md rounded-none">
-        <div className="flex flex-col items-center mb-8">
-          <Gamepad2 className="h-12 w-12 text-primary mb-2" />
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">
-            Trophy<span className="text-primary font-black">d</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-2">Crea tu cuenta de completista</p>
+          <div className="window-body has-space">
+            {error && (
+              <div style={{ color: "red", marginBottom: "15px", fontWeight: "bold", padding: "10px", backgroundColor: "rgba(255,0,0,0.1)", border: "1px solid red" }}>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+              
+              <div className="field-row-stacked">
+                <label htmlFor="username">Nombre de usuario:</label>
+                <input 
+                  id="username" type="text" required 
+                  value={username} onChange={(e) => setUsername(e.target.value)}
+                  placeholder="NinjaTrophy99"
+                />
+              </div>
+
+              <div className="field-row-stacked">
+                <label htmlFor="email">Dirección de E-mail:</label>
+                <input 
+                  id="email" type="email" required 
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                />
+              </div>
+
+              <div className="field-row-stacked">
+                <label htmlFor="password">Contraseña (mínimo 6 caracteres):</label>
+                <input 
+                  id="password" type="password" required 
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <section className="field-row" style={{ justifyContent: "flex-end", marginTop: "15px" }}>
+                <Link href="/login">
+                  <button type="button">Ya tengo cuenta</button>
+                </Link>
+                <button type="submit" className="default" disabled={loading}>
+                  {loading ? "Registrando..." : "Crear cuenta"}
+                </button>
+              </section>
+            </form>
+
+          </div>
         </div>
-
-        {}
-        {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-500 text-sm font-semibold">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleRegister} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="username" className="text-muted-foreground">Username</Label>
-            <Input 
-              id="username" 
-              type="text" 
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="NinjaTrophy99" 
-              className="bg-background/50 border-input text-foreground rounded-none" 
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-muted-foreground">E-mail</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com" 
-              className="bg-background/50 border-input text-foreground rounded-none" 
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-muted-foreground">Password</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••" 
-              className="bg-background/50 border-input text-foreground rounded-none" 
-            />
-          </div>
-
-          <Button type="submit" disabled={loading} className="w-full font-bold mt-6 rounded-none">
-            {loading ? "Creando cuenta..." : "Register"}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          ¿Ya tienes una cuenta?{" "}
-          <Link href="/login" className="text-primary hover:brightness-110 hover:underline transition-all">
-            Login
-          </Link>
-        </div>
-      </div>
+      </Draggable>
     </div>
   );
 }
