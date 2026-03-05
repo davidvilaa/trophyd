@@ -87,8 +87,11 @@ useEffect(() => {
               </Link>
             </section>
           ) : (
-
-            <div style={{ position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+              <div className="searchbox" style={{ marginLeft: "20px", marginRight: "auto", display: "flex", height: "28px"}}>
+                <input type="search" placeholder="Buscar juegos..." style={{ height: "100%" }} />
+                <button aria-label="search" style={{ height: "93%" }}></button>
+              </div>
               <button 
                 type="button" 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
