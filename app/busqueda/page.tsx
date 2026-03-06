@@ -12,17 +12,17 @@ const JUEGOS_PRUEBA = [
   {
     id: 2,
     titulo: "The Witcher 3",
-    portada: "https://corsproxy.io/?https://cdn1.epicgames.com/salesEvent/salesEvent/OW_Epic_PortraitStorefront_1200x1600-99dad6c305834ce163cabb944d909304"
+    portada: "https://i.imgur.com/QDVyGAO.png"
   },
   {
     id: 3,
     titulo: "The Witcher 3",
-    portada: "https://cdn1.epicgames.com/salesEvent/salesEvent/OW_Epic_PortraitStorefront_1200x1600-99dad6c305834ce163cabb944d909304"
+    portada: "https://i.imgur.com/QDVyGAO.png"
   },
   {
     id: 4,
     titulo: "The Witcher 3",
-    portada: "https://cdn1.epicgames.com/salesEvent/salesEvent/OW_Epic_PortraitStorefront_1200x1600-99dad6c305834ce163cabb944d909304"
+    portada: "https://i.imgur.com/QDVyGAO.png"
   }
 ];
 
