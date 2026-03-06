@@ -51,6 +51,14 @@ useEffect(() => {
     router.push("/");
   };
 
+  const [textoBusqueda, setTextoBusqueda] = useState("");
+  const ejecutarBusqueda = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (textoBusqueda.trim() !== "") {
+      router.push(`/busqueda?q=${encodeURIComponent(textoBusqueda)}`);
+    }
+  };
+
   const displayName = username;
 
   return (
@@ -99,10 +107,16 @@ useEffect(() => {
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
               
-              <div className="searchbox" style={{ display: "flex", height: "28px", minWidth: "250px" }}>
-                <input type="search" placeholder="Buscar juegos..." style={{ height: "100%", width: "100%" }} />
-                <button aria-label="search" style={{ height: "93%" }}></button>
-              </div>
+              <form className="searchbox" onSubmit={ejecutarBusqueda} style={{ display: "flex", height: "28px", minWidth: "250px" }}>
+                <input 
+                  type="search" 
+                  placeholder="Buscar juegos..." 
+                  style={{ height: "100%", width: "100%" }} 
+                  value={textoBusqueda}
+                  onChange={(e) => setTextoBusqueda(e.target.value)}
+                />
+                <button type="submit" aria-label="search" style={{ height: "93%" }}></button>
+              </form>
 
               <div style={{ position: "relative" }}> 
                 

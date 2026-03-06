@@ -13,50 +13,63 @@ function Model({ url, coverUrl, onClick, hovered }: { url: string, coverUrl: str
   const texture = useTexture(coverUrl);
   texture.colorSpace = THREE.SRGBColorSpace;
   
-  texture.flipY = true; 
+  texture.flipY = false; 
 
   useEffect(() => {
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.material = new THREE.MeshStandardMaterial({ 
-          color: "#2a2a2a", 
-          roughness: 0.6,
-          metalness: 0.1
-        });
+        
+        const nombreOriginal = child.material.name;
+
+        if (nombreOriginal === "MATERIAL PORTADA") { 
+          child.material = new THREE.MeshStandardMaterial({ 
+            name: nombreOriginal,
+            map: texture, 
+            roughness: 0.3,
+          });
+        } 
+        else {
+          child.material = new THREE.MeshStandardMaterial({ 
+            name: nombreOriginal, 
+            color: "#1a1a1a", 
+            roughness: 0.7,
+            metalness: 0.2
+          });
+        }
+
       }
     });
-  }, [clonedScene]);
+  }, [clonedScene, texture]);
 
   useFrame((state) => {
     if (!meshRef.current) return;
-    let targetX = 0;
-    let targetY = 0;
+    
+    let targetX = 0.05; 
+    let targetY = 0.3;  
+    let targetScale = 1;
 
     if (hovered) {
-      targetY = state.mouse.x * 0.5;
-      targetX = -state.mouse.y * 0.5;
+      targetY = 0.3 + (state.mouse.x * 0.4);
+      targetX = 0.05 + (-state.mouse.y * 0.4);
+      targetScale = 1.15;
     } 
 
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
+    
+    const currentScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.1);
+    meshRef.current.scale.set(currentScale, currentScale, currentScale);
   });
 
   return (
     <group ref={meshRef} onClick={onClick}>
-      
       <Center>
         <primitive 
           object={clonedScene} 
-          scale={6.5} 
-          rotation={[0, Math.PI, 0]}
+          scale={0.25}
+          rotation={[0, 0, 0]}
         />
       </Center>
-
-      <mesh position={[0, 0, 0.5]} scale={[2.8, 3.9, 1]}> 
-        <planeGeometry args={[1, 1]} />
-        <meshStandardMaterial map={texture} roughness={0.3} />
-      </mesh>
-
     </group>
   );
 }
@@ -66,19 +79,27 @@ export default function GameCard3D({ coverUrl, onClick }: { coverUrl: string, on
 
   return (
     <div 
-      style={{ width: "100%", height: "100%", cursor: hovered ? "pointer" : "default" }} 
+      style={{ 
+        width: "150%", 
+        height: "150%", 
+        position: "absolute",
+        top: "-25%",
+        left: "-25%",
+        cursor: hovered ? "pointer" : "default",
+        zIndex: hovered ? 50 : 1 
+      }} 
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      <Canvas camera={{ position: [0, 0, 12], fov: 30 }}>
-        <ambientLight intensity={1} />
+      <Canvas camera={{ position: [0, 0, 22], fov: 20 }}>
+        <ambientLight intensity={1.2} />
         <pointLight position={[10, 10, 10]} intensity={2} />
         <Environment preset="city" />
 
-        <Float speed={2} rotationIntensity={hovered ? 0.3 : 0.1} floatIntensity={hovered ? 0.8 : 0.3}>
+        <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
           <Suspense fallback={null}>
             <Model 
-              url="/models/carcasaPLACEHOLDER.glb" 
+              url="/models/carcasaPLACEHOLDER.glb?v=10" 
               coverUrl={coverUrl} 
               onClick={onClick} 
               hovered={hovered} 
@@ -86,7 +107,7 @@ export default function GameCard3D({ coverUrl, onClick }: { coverUrl: string, on
           </Suspense>
         </Float>
 
-        <ContactShadows position={[0, -2.5, 0]} opacity={0.4} scale={10} blur={2} />
+        <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={10} blur={2.5} />
       </Canvas>
     </div>
   );
