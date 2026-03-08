@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
+  
+  const offset = searchParams.get('offset') || '0';
+  const limit = '20'; 
 
   if (!query) {
     return NextResponse.json({ error: 'Falta la búsqueda' }, { status: 400 });
@@ -19,14 +22,13 @@ export async function GET(request: Request) {
     const tokenData = await tokenRes.json();
     
     if (!tokenRes.ok) {
-      console.error("--> 2. ERROR DE TWITCH:", tokenData);
       return NextResponse.json({ error: 'Fallo de Twitch' }, { status: 500 });
     }
 
     const accessToken = tokenData.access_token;
     const palabraLimpia = query.trim();
 
-    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id; limit 12;`;
+    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id; limit ${limit}; offset ${offset};`;
 
     const igdbRes = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
@@ -43,7 +45,6 @@ export async function GET(request: Request) {
     const games = await igdbRes.json();
 
     if (!igdbRes.ok) {
-      console.error("--> 3. ERROR DE IGDB:", games);
       return NextResponse.json({ error: 'Fallo de IGDB' }, { status: 500 });
     }
 
@@ -55,12 +56,11 @@ export async function GET(request: Request) {
         portada: `https://images.igdb.com/igdb/image/upload/t_cover_big/${juego.cover.image_id}.jpg`
       }));
 
-    console.log("--> 4. JUEGOS ENCONTRADOS Y CON FOTO:", juegosFormateados.length);
+    console.log(`JUEGOS ENCONTRADOS Y CON FOTO (Offset: ${offset}):`, juegosFormateados.length);
 
     return NextResponse.json(juegosFormateados);
 
   } catch (error) {
-    console.error("--> FATAL ERROR:", error);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }

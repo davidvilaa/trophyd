@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect} from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import GameCard3D from "@/components/gameCard3D";
+import { Canvas } from "@react-three/fiber";
+import { View } from "@react-three/drei";
 
 export default function BusquedaPage() {
   const searchParams = useSearchParams();
@@ -13,6 +15,8 @@ export default function BusquedaPage() {
   const [busqueda, setBusqueda] = useState("");
   const [juegos, setJuegos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
+
+  const mainRef = useRef<HTMLElement>(null!);
 
   useEffect(() => {
     if (!query) return;
@@ -45,7 +49,7 @@ export default function BusquedaPage() {
   };
 
   return (
-    <main style={{ padding: "100px 20px 40px", minHeight: "100vh" }}>
+    <main ref={mainRef} style={{ padding: "100px 20px 40px", minHeight: "100vh", position: "relative" }}>
 
       <div style={{
         maxWidth: "1100px", margin: "0 auto", display: "grid",
@@ -77,6 +81,13 @@ export default function BusquedaPage() {
           </div>
         </div>
       )}
+      <Canvas
+        eventSource={mainRef}
+        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 10 }}
+        camera={{ position: [0, 0, 22], fov: 20 }}
+      >
+        <View.Port />
+      </Canvas>
     </main>
   );
 }
