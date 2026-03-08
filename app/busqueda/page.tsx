@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
@@ -23,36 +23,54 @@ export default function BusquedaPage() {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setJuegos([]);
-    setOffset(0);
-    setHasMore(true);
+    if (!query) return;
+
+    const buscarInicial = async () => {
+      setCargando(true);
+      try {
+        const respuesta = await fetch(`/api/igdb?q=${query}&offset=0`);
+        const datos = await respuesta.json();
+
+        if (Array.isArray(datos)) {
+          setJuegos(datos);
+          setOffset(0);
+          setHasMore(datos.length > 0); 
+        }
+      } catch (error) {
+        console.error("Error en búsqueda inicial:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    buscarInicial();
   }, [query]);
 
-  const buscarEnIGDB = async (currentOffset: number) => {
-    if (!query || cargando || !hasMore) return;
-    
-    setCargando(true);
-    try {
-      const respuesta = await fetch(`/api/igdb?q=${query}&offset=${currentOffset}`);
-      const datos = await respuesta.json();
-
-      if (Array.isArray(datos)) {
-        if (datos.length === 0) {
-          setHasMore(false);
-        } else {
-          setJuegos(prev => currentOffset === 0 ? datos : [...prev, ...datos]);
-        }
-      }
-    } catch (error) {
-      console.error("Error buscando juegos:", error);
-    } finally {
-      setCargando(false);
-    }
-  };
-
   useEffect(() => {
-    buscarEnIGDB(offset);
-  }, [query, offset]);
+    if (offset === 0 || !query || !hasMore) return;
+
+    const buscarMas = async () => {
+      setCargando(true);
+      try {
+        const respuesta = await fetch(`/api/igdb?q=${query}&offset=${offset}`);
+        const datos = await respuesta.json();
+
+        if (Array.isArray(datos)) {
+          if (datos.length === 0) {
+            setHasMore(false);
+          } else {
+            setJuegos((prev) => [...prev, ...datos]);
+          }
+        }
+      } catch (error) {
+        console.error("Error cargando más juegos:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    buscarMas();
+  }, [offset, query, hasMore]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
