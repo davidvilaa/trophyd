@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const accessToken = tokenData.access_token;
     const palabraLimpia = query.trim();
 
-    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id, total_rating_count, category; limit 150;`;
+    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id, total_rating_count, category; limit 500;`;
 
     const igdbRes = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
@@ -48,21 +48,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Fallo de IGDB' }, { status: 500 });
     }
 
-    // https://api-docs.igdb.com/#game-enums
-    const categoriasValidas = [0, 1, 2, 4, 8, 9, 10, 11];
+    const categoriasValidas = [0, 4, 8, 9, 10, 11];
 
     const juegosValidos = games.filter((juego: any) => {
       const tienePortada = juego.cover && juego.cover.image_id;
-      
       const esCategoriaValida = juego.category === undefined || categoriasValidas.includes(juego.category);
-
       return tienePortada && esCategoriaValida;
     });
 
     juegosValidos.sort((a: any, b: any) => {
-      const popularidadA = a.total_rating_count || 0;
-      const popularidadB = b.total_rating_count || 0;
-      return popularidadB - popularidadA;
+      const popA = a.total_rating_count || 0;
+      const popB = b.total_rating_count || 0;
+      
+      if (popB !== popA) {
+        return popB - popA;
+      }
+      return a.name.localeCompare(b.name);
     });
 
     const juegosPaginados = juegosValidos.slice(offset, offset + limit);
@@ -76,7 +77,6 @@ export async function GET(request: Request) {
     return NextResponse.json(juegosFormateados);
 
   } catch (error) {
-    console.error("--> FATAL ERROR:", error);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }
