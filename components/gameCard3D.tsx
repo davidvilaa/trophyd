@@ -34,7 +34,7 @@ function Model({ url, coverUrl, hovered }: { url: string, coverUrl: string, hove
   useFrame((state) => {
     if (!meshRef.current) return;
     let targetX = 0.05; 
-    let targetY = 0.3;  
+    let targetY = -0.3;  
     let targetScale = 1;
 
     if (hovered) {

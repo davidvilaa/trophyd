@@ -4,8 +4,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
   
-  const offset = searchParams.get('offset') || '0';
-  const limit = '20'; 
+  const offset = parseInt(searchParams.get('offset') || '0', 10);
+  const limit = 20; 
 
   if (!query) {
     return NextResponse.json({ error: 'Falta la búsqueda' }, { status: 400 });
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const accessToken = tokenData.access_token;
     const palabraLimpia = query.trim();
 
-    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id; limit ${limit}; offset ${offset};`;
+    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id, total_rating_count, category; limit 150;`;
 
     const igdbRes = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
@@ -48,19 +48,35 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Fallo de IGDB' }, { status: 500 });
     }
 
-    const juegosFormateados = games
-      .filter((juego: any) => juego.cover?.image_id)
-      .map((juego: any) => ({
-        id: juego.id,
-        titulo: juego.name,
-        portada: `https://images.igdb.com/igdb/image/upload/t_cover_big/${juego.cover.image_id}.jpg`
-      }));
+    // https://api-docs.igdb.com/#game-enums
+    const categoriasValidas = [0, 1, 2, 4, 8, 9, 10, 11];
 
-    console.log(`JUEGOS ENCONTRADOS Y CON FOTO (Offset: ${offset}):`, juegosFormateados.length);
+    const juegosValidos = games.filter((juego: any) => {
+      const tienePortada = juego.cover && juego.cover.image_id;
+      
+      const esCategoriaValida = juego.category === undefined || categoriasValidas.includes(juego.category);
+
+      return tienePortada && esCategoriaValida;
+    });
+
+    juegosValidos.sort((a: any, b: any) => {
+      const popularidadA = a.total_rating_count || 0;
+      const popularidadB = b.total_rating_count || 0;
+      return popularidadB - popularidadA;
+    });
+
+    const juegosPaginados = juegosValidos.slice(offset, offset + limit);
+
+    const juegosFormateados = juegosPaginados.map((juego: any) => ({
+      id: juego.id,
+      titulo: juego.name,
+      portada: `https://images.igdb.com/igdb/image/upload/t_cover_big/${juego.cover.image_id}.jpg`
+    }));
 
     return NextResponse.json(juegosFormateados);
 
   } catch (error) {
+    console.error("--> FATAL ERROR:", error);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }
