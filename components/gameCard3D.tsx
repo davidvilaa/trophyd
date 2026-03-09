@@ -5,8 +5,6 @@ import { useFrame } from "@react-three/fiber";
 import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View } from "@react-three/drei";
 import * as THREE from "three";
 
-const FALLBACK_TRANSPARENTE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-
 function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
@@ -16,13 +14,12 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.flipY = false; 
 
-  const templatePath = consola ? `/models/${consola}/${consola}_1.png` : FALLBACK_TRANSPARENTE;
+  const consolaFinal = consola ? consola : "pc";
+
+  const templatePath = `/models/${consolaFinal}/${consolaFinal}_1.png`;
   const textureTemplate = useTexture(templatePath);
   textureTemplate.colorSpace = THREE.SRGBColorSpace;
   textureTemplate.flipY = false;
-
-  texture.center.set(0.5, 0.5);
-  texture.repeat.set(1, 0.85);
 
   useEffect(() => {
     clonedScene.traverse((child) => {
@@ -35,18 +32,14 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
           });
         } 
         else if (nombreOriginal === "T_PORTADA") {
-          if (consola) {
-            child.visible = true;
-            child.material = new THREE.MeshStandardMaterial({ 
-              name: nombreOriginal, 
-              map: textureTemplate, 
-              transparent: true,
-              alphaTest: 0.1,
-              roughness: 0.2
-            });
-          } else {
-            child.visible = false; 
-          }
+          child.visible = true; 
+          child.material = new THREE.MeshStandardMaterial({ 
+            name: nombreOriginal, 
+            map: textureTemplate, 
+            transparent: true, 
+            alphaTest: 0.1,    
+            roughness: 0.2
+          });
         } 
         else {
           child.material = new THREE.MeshStandardMaterial({ 
@@ -55,7 +48,7 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
         }
       }
     });
-  }, [clonedScene, texture, textureTemplate, consola]);
+  }, [clonedScene, texture, textureTemplate, consolaFinal]);
 
   useFrame((state) => {
     if (!meshRef.current) return;
@@ -64,10 +57,10 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
     let targetScale = 1;
 
     if (hovered) {
-      targetY = 0.3 + (state.mouse.x * 0.4);
-      targetX = 0.05 + (-state.mouse.y * 0.4);
+      targetY = state.pointer.x * 0.6; 
+      targetX = 0.05 + (-state.pointer.y * 0.4);
       targetScale = 1.15;
-    } 
+    }
 
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
@@ -105,7 +98,7 @@ export default function GameCard3D({ coverUrl, onClick, consola}: { coverUrl: st
         <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
           <Suspense fallback={null}>
             <Model 
-              url="/models/carcasaPRUEBA.glb?v=10" 
+              url="/models/carcasaRECTANGULAR.glb?v=10" 
               coverUrl={coverUrl} 
               hovered={hovered} 
               consola={consola}
