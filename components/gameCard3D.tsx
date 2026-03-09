@@ -14,11 +14,14 @@ function Model({ url, coverUrl, hovered }: { url: string, coverUrl: string, hove
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.flipY = false; 
 
+  texture.center.set(0.5, 0.5);
+  texture.repeat.set(1, 0.85);
+
   useEffect(() => {
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const nombreOriginal = child.material.name;
-        if (nombreOriginal === "MATERIAL PORTADA") { 
+        if (nombreOriginal === "PORTADA") { 
           child.material = new THREE.MeshStandardMaterial({ 
             name: nombreOriginal, map: texture, roughness: 0.3,
           });
@@ -79,7 +82,7 @@ export default function GameCard3D({ coverUrl, onClick }: { coverUrl: string, on
         <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
           <Suspense fallback={null}>
             <Model 
-              url="/models/carcasaPLACEHOLDER.glb?v=10" 
+              url="/models/carcasaPRUEBA.glb?v=10" 
               coverUrl={coverUrl} 
               hovered={hovered} 
             />
