@@ -109,7 +109,11 @@ export default function BusquedaPage() {
             width: "100%", height: "280px", display: "flex",
             justifyContent: "center", alignItems: "center", position: "relative"
           }}>
-            <GameCard3D coverUrl={juego.portada} onClick={() => handleBoxClick(juego.titulo)} />
+            <GameCard3D 
+              coverUrl={juego.portada} 
+              consola={juego.consola}
+              onClick={() => handleBoxClick(juego.titulo)} 
+            />
           </div>
         ))}
       </div>

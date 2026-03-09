@@ -1,5 +1,33 @@
 import { NextResponse } from 'next/server';
 
+const PLATAFORMAS_MAP: Record<number, string> = {
+  37: "3ds",
+  33: "gameboy",
+  24: "gameboyadvance",
+  22: "gameboycolor",
+  21: "gamecube",
+  4: "n64",
+  20: "nds",
+  18: "nes",
+  6: "pc",
+  7: "ps1",
+  8: "ps2",
+  9: "ps3",
+  48: "ps4",
+  167: "ps5",
+  38: "psp",
+  46: "psvita",
+  19: "snes",
+  130: "switch",
+  508: "switch2",
+  5: "wii",
+  41: "wiiu",
+  11: "xbox",
+  12: "xbox360",
+  49: "xboxone",
+  169: "xboxseriesxs"
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
@@ -28,7 +56,7 @@ export async function GET(request: Request) {
     const accessToken = tokenData.access_token;
     const palabraLimpia = query.trim();
 
-    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id, total_rating_count, category; limit 500;`;
+    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id, total_rating_count, category, platforms; limit 500;`;
 
     const igdbRes = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
@@ -68,11 +96,24 @@ export async function GET(request: Request) {
 
     const juegosPaginados = juegosValidos.slice(offset, offset + limit);
 
-    const juegosFormateados = juegosPaginados.map((juego: any) => ({
-      id: juego.id,
-      titulo: juego.name,
-      portada: `https://images.igdb.com/igdb/image/upload/t_cover_big/${juego.cover.image_id}.jpg`
-    }));
+    const juegosFormateados = juegosPaginados.map((juego: any) => {
+      let consolaAsignada = null;
+      
+      if (juego.platforms) {
+        for (const platID of juego.platforms) {
+          if (PLATAFORMAS_MAP[platID]) {
+            consolaAsignada = PLATAFORMAS_MAP[platID];
+            break;
+          }
+        }
+      }
+    return {
+        id: juego.id,
+        titulo: juego.name,
+        portada: `https://images.igdb.com/igdb/image/upload/t_cover_big/${juego.cover.image_id}.jpg`,
+        consola: consolaAsignada
+      };
+    });
 
     return NextResponse.json(juegosFormateados);
 

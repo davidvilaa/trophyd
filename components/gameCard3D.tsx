@@ -5,7 +5,9 @@ import { useFrame } from "@react-three/fiber";
 import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View } from "@react-three/drei";
 import * as THREE from "three";
 
-function Model({ url, coverUrl, hovered }: { url: string, coverUrl: string, hovered: boolean }) {
+const FALLBACK_TRANSPARENTE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -14,6 +16,11 @@ function Model({ url, coverUrl, hovered }: { url: string, coverUrl: string, hove
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.flipY = false; 
 
+  const templatePath = consola ? `/models/${consola}/${consola}_1.png` : FALLBACK_TRANSPARENTE;
+  const textureTemplate = useTexture(templatePath);
+  textureTemplate.colorSpace = THREE.SRGBColorSpace;
+  textureTemplate.flipY = false;
+
   texture.center.set(0.5, 0.5);
   texture.repeat.set(1, 0.85);
 
@@ -21,18 +28,34 @@ function Model({ url, coverUrl, hovered }: { url: string, coverUrl: string, hove
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const nombreOriginal = child.material.name;
+        
         if (nombreOriginal === "PORTADA") { 
           child.material = new THREE.MeshStandardMaterial({ 
             name: nombreOriginal, map: texture, roughness: 0.3,
           });
-        } else {
+        } 
+        else if (nombreOriginal === "T_PORTADA") {
+          if (consola) {
+            child.visible = true;
+            child.material = new THREE.MeshStandardMaterial({ 
+              name: nombreOriginal, 
+              map: textureTemplate, 
+              transparent: true,
+              alphaTest: 0.1,
+              roughness: 0.2
+            });
+          } else {
+            child.visible = false; 
+          }
+        } 
+        else {
           child.material = new THREE.MeshStandardMaterial({ 
             name: nombreOriginal, color: "#1a1a1a", roughness: 0.7, metalness: 0.2
           });
         }
       }
     });
-  }, [clonedScene, texture]);
+  }, [clonedScene, texture, textureTemplate, consola]);
 
   useFrame((state) => {
     if (!meshRef.current) return;
@@ -61,7 +84,7 @@ function Model({ url, coverUrl, hovered }: { url: string, coverUrl: string, hove
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick }: { coverUrl: string, onClick: () => void }) {
+export default function GameCard3D({ coverUrl, onClick, consola}: { coverUrl: string, onClick: () => void, consola: string | null }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -85,6 +108,7 @@ export default function GameCard3D({ coverUrl, onClick }: { coverUrl: string, on
               url="/models/carcasaPRUEBA.glb?v=10" 
               coverUrl={coverUrl} 
               hovered={hovered} 
+              consola={consola}
             />
           </Suspense>
         </Float>
