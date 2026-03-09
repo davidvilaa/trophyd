@@ -1,32 +1,17 @@
 import { NextResponse } from 'next/server';
 
 const PLATAFORMAS_MAP: Record<number, string> = {
-  37: "3ds",
-  33: "gameboy",
-  24: "gameboyadvance",
-  22: "gameboycolor",
-  21: "gamecube",
-  4: "n64",
-  20: "nds",
-  18: "nes",
-  6: "pc",
-  7: "ps1",
-  8: "ps2",
-  9: "ps3",
-  48: "ps4",
-  167: "ps5",
-  38: "psp",
-  46: "psvita",
-  19: "snes",
-  130: "switch",
-  508: "switch2",
-  5: "wii",
-  41: "wiiu",
-  11: "xbox",
-  12: "xbox360",
-  49: "xboxone",
-  169: "xboxseriesxs"
+  37: "3ds", 33: "gameboy", 24: "gameboyadvance", 22: "gameboycolor",
+  21: "gamecube", 4: "n64", 20: "nds", 18: "nes", 6: "pc", 7: "ps1",
+  8: "ps2", 9: "ps3", 48: "ps4", 167: "ps5", 38: "psp", 46: "psvita",
+  19: "snes", 130: "switch", 438: "switch2", 5: "wii", 41: "wiiu",
+  11: "xbox", 12: "xbox360", 49: "xboxone", 169: "xboxseriesxs"
 };
+
+const PRIORIDAD_PLATAFORMAS = [ // Orden de prioridad; plataformas retro primero
+  18, 33, 19,  22, 7, 4, 24, 8, 21, 11, 20, 38, 12, 9,  
+  5, 37, 46, 41, 48, 49, 130, 167, 169,438, 6
+];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -100,14 +85,25 @@ export async function GET(request: Request) {
       let consolaAsignada = null;
       
       if (juego.platforms) {
-        for (const platID of juego.platforms) {
+        const plataformasOrdenadas = juego.platforms.sort((a: number, b: number) => {
+          const indexA = PRIORIDAD_PLATAFORMAS.indexOf(a);
+          const indexB = PRIORIDAD_PLATAFORMAS.indexOf(b);
+          
+          const pesoA = indexA === -1 ? 999 : indexA;
+          const pesoB = indexB === -1 ? 999 : indexB;
+          
+          return pesoA - pesoB;
+        });
+
+        for (const platID of plataformasOrdenadas) {
           if (PLATAFORMAS_MAP[platID]) {
             consolaAsignada = PLATAFORMAS_MAP[platID];
             break;
           }
         }
       }
-    return {
+
+      return {
         id: juego.id,
         titulo: juego.name,
         portada: `https://images.igdb.com/igdb/image/upload/t_cover_big/${juego.cover.image_id}.jpg`,
