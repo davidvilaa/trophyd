@@ -5,6 +5,13 @@ import { useFrame } from "@react-three/fiber";
 import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View } from "@react-three/drei";
 import * as THREE from "three";
 
+const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [number, number] }> = {
+  "ps1": { repeat: [1.17, 1], offset: [-0.17, 0] },
+  "ps2": {repeat: [1,1.07], offset: [0,-0.09]},
+  "ps3": {repeat: [1,1], offset: [0,-0.08]},
+  "ps4": {repeat: [1,1.05], offset: [0,-0.11]}
+};
+
 function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
@@ -27,7 +34,7 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
         setTexture(tex);
       }, 
       undefined, 
-      (err) => console.warn("--> Fallo al cargar foto de IGDB (No te preocupes, no crashea):", coverUrl)
+      (err) => console.warn("Fallo al cargar foto de IGDB", coverUrl)
     );
 
     loader.load(
@@ -38,11 +45,20 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
         setTextureTemplate(tex);
       },
       undefined,
-      (err) => console.warn("--> Template no encontrado:", templatePath)
+      (err) => console.warn("Template no encontrado:", templatePath)
     );
   }, [coverUrl, templatePath]);
 
   useEffect(() => {
+    if (texture) {
+      const ajuste = AJUSTES_PORTADA[consolaFinal] || { repeat: [1, 1], offset: [0, 0] };
+      
+      texture.center.set(0, 0); 
+      texture.repeat.set(ajuste.repeat[0], ajuste.repeat[1]);
+      texture.offset.set(ajuste.offset[0], ajuste.offset[1]);
+      texture.needsUpdate = true;
+    }
+
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const nombreOriginal = child.material.name;
@@ -95,7 +111,7 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
     
     const currentScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.1);
-    meshRef.current.scale.set(currentScale, currentScale, currentScale); // El grupo escala normal
+    meshRef.current.scale.set(currentScale, currentScale, currentScale);
   });
 
   return (

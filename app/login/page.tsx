@@ -25,7 +25,7 @@ export default function LoginPage() {
     });
 
     if (authError) {
-      setError("Correo o contraseña incorrectos, bro.");
+      setError("Correo o contraseña incorrectos");
       setLoading(false);
       return;
     }
