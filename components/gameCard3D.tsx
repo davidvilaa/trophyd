@@ -10,16 +10,37 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
   
-  const texture = useTexture(coverUrl);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.flipY = false; 
-
   const consolaFinal = consola ? consola : "pc";
-
   const templatePath = `/models/${consolaFinal}/${consolaFinal}_1.png`;
-  const textureTemplate = useTexture(templatePath);
-  textureTemplate.colorSpace = THREE.SRGBColorSpace;
-  textureTemplate.flipY = false;
+
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [textureTemplate, setTextureTemplate] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    const loader = new THREE.TextureLoader();
+    
+    loader.load(
+      coverUrl, 
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.flipY = false;
+        setTexture(tex);
+      }, 
+      undefined, 
+      (err) => console.warn("--> Fallo al cargar foto de IGDB (No te preocupes, no crashea):", coverUrl)
+    );
+
+    loader.load(
+      templatePath, 
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.flipY = false;
+        setTextureTemplate(tex);
+      },
+      undefined,
+      (err) => console.warn("--> Template no encontrado:", templatePath)
+    );
+  }, [coverUrl, templatePath]);
 
   useEffect(() => {
     clonedScene.traverse((child) => {
@@ -28,14 +49,17 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
         
         if (nombreOriginal === "PORTADA") { 
           child.material = new THREE.MeshStandardMaterial({ 
-            name: nombreOriginal, map: texture, roughness: 0.3,
+            name: nombreOriginal, 
+            map: texture || null,
+            color: texture ? "#ffffff" : "#222222",
+            roughness: 0.3,
           });
         } 
         else if (nombreOriginal === "T_PORTADA") {
           child.visible = true; 
           child.material = new THREE.MeshStandardMaterial({ 
             name: nombreOriginal, 
-            map: textureTemplate, 
+            map: textureTemplate || null, 
             transparent: true, 
             alphaTest: 0.1,    
             roughness: 0.2
@@ -49,6 +73,11 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
       }
     });
   }, [clonedScene, texture, textureTemplate, consolaFinal]);
+
+  const consolasCuadradas = ["nds", "3ds", "ps1", "gameboy", "gameboycolor", "gameboyadvance"]; 
+  const escalaModelo: [number, number, number] = consolasCuadradas.includes(consolaFinal) 
+    ? [0.32, 0.25, 0.25]
+    : [0.25, 0.25, 0.25];
 
   useFrame((state) => {
     if (!meshRef.current) return;
@@ -64,14 +93,15 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
 
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
+    
     const currentScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.1);
-    meshRef.current.scale.set(currentScale, currentScale, currentScale);
+    meshRef.current.scale.set(currentScale, currentScale, currentScale); // El grupo escala normal
   });
 
   return (
     <group ref={meshRef}>
       <Center>
-        <primitive object={clonedScene} scale={0.25} rotation={[0, 0, 0]} />
+        <primitive object={clonedScene} scale={escalaModelo} rotation={[0, 0, 0]} />
       </Center>
     </group>
   );
@@ -98,7 +128,7 @@ export default function GameCard3D({ coverUrl, onClick, consola}: { coverUrl: st
         <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
           <Suspense fallback={null}>
             <Model 
-              url="/models/carcasaRECTANGULAR.glb?v=10" 
+              url="/models/carcasa.glb?v=10" 
               coverUrl={coverUrl} 
               hovered={hovered} 
               consola={consola}
