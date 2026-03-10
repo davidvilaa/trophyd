@@ -10,11 +10,27 @@ const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [numbe
   "ps2": {repeat: [1,1.07], offset: [0,-0.09]},
   "ps3": {repeat: [1,1], offset: [0,-0.08]},
   "ps4": {repeat: [1,1.1], offset: [0,-0.12]},
-  "ps5": {repeat: [1,1.08], offset: [0,-0.1]},
+  "ps5": {repeat: [1,1.08], offset: [0,-0.11]},
   "psp": {repeat: [1,1.08], offset: [0,-0.1]},
   "psvita": {repeat: [1,1.06], offset: [0,-0.08]},
   "nes": {repeat: [1,1], offset: [0,0]}, // !!
-  "snes": {repeat: [1,1.65], offset: [0,-0.36]}
+  "snes": {repeat: [1,1.65], offset: [0,-0.36]},
+  "n64": {repeat: [1,1], offset: [0,0]}, // !!
+  "gamecube": {repeat: [1,0.97], offset: [0,-0.05]},
+  "wii": {repeat: [1,0.98], offset: [0,0]},
+  "wiiu": {repeat: [1,0.97], offset: [0,-0.05]},
+  "switch": {repeat: [1,1], offset: [0,0]},
+  "switch2": {repeat: [1,1], offset: [0,-0.1]},
+  "gameboy": {repeat: [1.18,1], offset: [-0.18,0]},
+  "gameboycolor": {repeat: [1.25,1], offset: [-0.25,0]},
+  "gameboyadvance": {repeat: [1.1,1], offset: [-0.1,0]},
+  "nds": {repeat: [1.18,1], offset: [-0.18,0]},
+  "3ds": {repeat: [1.12,1], offset: [0,0]},
+  "xbox": {repeat: [1,1.1], offset: [0,-0.12]},
+  "xbox360": {repeat: [1,1.1], offset: [0,-0.13]},
+  "xboxone": {repeat: [1,1.1], offset: [0,-0.15]},
+  "xboxseriesxs": {repeat: [1,1.05], offset: [0,-0.1]},
+  "pc": {repeat: [1,1.1], offset: [0,-0.12]}
 };
 
 function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {

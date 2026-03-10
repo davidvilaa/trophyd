@@ -4,13 +4,13 @@ const PLATAFORMAS_MAP: Record<number, string> = {
   37: "3ds", 33: "gameboy", 24: "gameboyadvance", 22: "gameboycolor",
   21: "gamecube", 4: "n64", 20: "nds", 18: "nes", 6: "pc", 7: "ps1",
   8: "ps2", 9: "ps3", 48: "ps4", 167: "ps5", 38: "psp", 46: "psvita",
-  19: "snes", 130: "switch", 438: "switch2", 5: "wii", 41: "wiiu",
+  19: "snes", 130: "switch", 508: "switch2", 5: "wii", 41: "wiiu",
   11: "xbox", 12: "xbox360", 49: "xboxone", 169: "xboxseriesxs"
 };
 
 const PRIORIDAD_PLATAFORMAS = [ // Orden de prioridad; plataformas retro primero
   18, 33, 19,  22, 7, 4, 24, 8, 21, 11, 20, 38, 12, 9,  
-  5, 37, 46, 41, 48, 49, 130, 167, 169,438, 6
+  5, 37, 46, 41, 48, 49, 130, 167,169, 508, 6
 ];
 
 export async function GET(request: Request) {
