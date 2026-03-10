@@ -33,6 +33,33 @@ const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [numbe
   "pc": {repeat: [1,1.1], offset: [0,-0.12]}
 };
 
+const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opacity?: number }> = {
+  "ps1": { color: "#000000", roughness: 0.5},
+  "ps2": { color: "#000000", roughness: 0.5},
+  "ps3": { color: "#000000", roughness: 0.5},
+  "ps4": { color: "#005988", roughness: 0.5, opacity: 0.8},
+  "ps5": { color: "#005988", roughness: 0.5, opacity: 0.8},
+  "psp": { color: "#000000", roughness: 0.5},
+  "psvita": { color: "#005988", roughness: 0.5, opacity: 0.9},
+  "nes": { color: "#000000", roughness: 0.5},
+  "snes": { color: "#000000", roughness: 0.5},
+  "n64": { color: "#52565a", roughness: 0.5, opacity: 0.4},
+  "gamecube": { color: "#000000", roughness: 0.5},
+  "wii": { color: "#ffffff", roughness: 0.5},
+  "wiiu": { color: "#0889ce", roughness: 0.5, opacity: 0.8},
+  "switch": { color: "#d72c2c", roughness: 0.5, opacity: 0.8},
+  "switch2": { color: "#d72c2c", roughness: 0.5, opacity: 0.8},
+  "gameboy": { color: "#52565a", roughness: 0.5, opacity: 0.4},
+  "gameboycolor": { color: "#52565a", roughness: 0.5, opacity: 0.4},
+  "gameboyadvance": { color: "#52565a", roughness: 0.5, opacity: 0.4},
+  "nds": { color: "#ffffff", roughness: 0.5},
+  "3ds": { color: "#ffffff", roughness: 0.5},
+  "xbox": { color: "#75b034", roughness: 0.5},
+  "xbox360": { color: "#75b034", roughness: 0.5},
+  "xboxone": { color: "#75b034", roughness: 0.5},
+  "xboxseriesxs": { color: "#75b034", roughness: 0.5},
+  "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
+};
 
 function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {
   const { scene } = useGLTF(url);
@@ -138,8 +165,15 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
           });
         }
         else {
+          const plastico = ESTILOS_GENERAL[consolaFinal] || { color: "#1a1a1a", roughness: 0.7, opacity: 1 };
+          
           child.material = new THREE.MeshStandardMaterial({ 
-            name: nombreOriginal, color: "#1a1a1a", roughness: 0.7, metalness: 0.2
+            name: nombreOriginal, 
+            color: plastico.color, 
+            roughness: plastico.roughness ?? 0.7,
+            metalness: 0.2,
+            transparent: plastico.opacity !== undefined && plastico.opacity < 1,
+            opacity: plastico.opacity ?? 1
           });
         }
       }
@@ -154,7 +188,7 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
   useFrame((state) => {
     if (!meshRef.current) return;
     let targetX = 0.05; 
-    let targetY = 0.5;  
+    let targetY = -0.3;  
     let targetScale = 1;
 
     if (hovered) {
