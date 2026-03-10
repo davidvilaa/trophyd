@@ -33,6 +33,7 @@ const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [numbe
   "pc": {repeat: [1,1.1], offset: [0,-0.12]}
 };
 
+
 function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
@@ -153,7 +154,7 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
   useFrame((state) => {
     if (!meshRef.current) return;
     let targetX = 0.05; 
-    let targetY = -0.3;  
+    let targetY = 0.5;  
     let targetScale = 1;
 
     if (hovered) {
