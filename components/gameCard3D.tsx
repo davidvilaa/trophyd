@@ -13,12 +13,12 @@ const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [numbe
   "ps5": {repeat: [1,1.08], offset: [0,-0.11]},
   "psp": {repeat: [1,1.08], offset: [0,-0.1]},
   "psvita": {repeat: [1,1.06], offset: [0,-0.08]},
-  "nes": {repeat: [1,1], offset: [0,0]}, // !!
+  "nes": {repeat: [1.2,1.75], offset: [-0.1,-0.13]},
   "snes": {repeat: [1,1.65], offset: [0,-0.36]},
-  "n64": {repeat: [1,1], offset: [0,0]}, // !!
+  "n64": {repeat: [1.18,1], offset: [0.03,0]},
   "gamecube": {repeat: [1,0.97], offset: [0,-0.05]},
   "wii": {repeat: [1,0.98], offset: [0,0]},
-  "wiiu": {repeat: [1,0.97], offset: [0,-0.05]},
+  "wiiu": {repeat: [1,0.97], offset: [0,-0.03]},
   "switch": {repeat: [1,1], offset: [0,0]},
   "switch2": {repeat: [1,1], offset: [0,-0.1]},
   "gameboy": {repeat: [1.18,1], offset: [-0.18,0]},
@@ -111,7 +111,7 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
     });
   }, [clonedScene, texture, textureTemplate, consolaFinal]);
 
-  const consolasCuadradas = ["nds", "3ds", "ps1", "gameboy", "gameboycolor", "gameboyadvance"]; 
+  const consolasCuadradas = ["n64","nds", "3ds", "ps1", "gameboy", "gameboycolor", "gameboyadvance"]; 
   const escalaModelo: [number, number, number] = consolasCuadradas.includes(consolaFinal) 
     ? [0.32, 0.25, 0.25]
     : [0.25, 0.25, 0.25];
