@@ -40,9 +40,13 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
   
   const consolaFinal = consola ? consola : "pc";
   const templatePath = `/models/${consolaFinal}/${consolaFinal}_1.png`;
+  const lomoPath = `/models/${consolaFinal}/${consolaFinal}_2.png`;
+  const contraPath = `/models/${consolaFinal}/${consolaFinal}_3.png`;
 
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
   const [textureTemplate, setTextureTemplate] = useState<THREE.Texture | null>(null);
+  const [textureLomo, setTextureLomo] = useState<THREE.Texture | null>(null);
+  const [textureContra, setTextureContra] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
     const loader = new THREE.TextureLoader();
@@ -67,6 +71,20 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
       },
       undefined,
       (err) => console.warn("Template no encontrado:", templatePath)
+    );
+
+    loader.load(
+      lomoPath, 
+      (tex) => { tex.colorSpace = THREE.SRGBColorSpace; tex.flipY = false; setTextureLomo(tex); },
+      undefined,
+      (err) => console.warn("--> Lomo no encontrado:", lomoPath)
+    );
+
+    loader.load(
+      contraPath, 
+      (tex) => { tex.colorSpace = THREE.SRGBColorSpace; tex.flipY = false; setTextureContra(tex); },
+      undefined,
+      (err) => console.warn("--> Contraportada no encontrada:", contraPath)
     );
   }, [coverUrl, templatePath]);
 
@@ -102,6 +120,22 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
             roughness: 0.2
           });
         } 
+        else if (nombreOriginal === "LOMO") {
+          child.material = new THREE.MeshStandardMaterial({ 
+            name: nombreOriginal, 
+            map: textureLomo || null, 
+            color: textureLomo ? "#ffffff" : "#1a1a1a",
+            roughness: 0.4
+          });
+        }
+        else if (nombreOriginal === "CONTRAPORTADA") {
+          child.material = new THREE.MeshStandardMaterial({ 
+            name: nombreOriginal, 
+            map: textureContra || null, 
+            color: textureContra ? "#ffffff" : "#1a1a1a", 
+            roughness: 0.4
+          });
+        }
         else {
           child.material = new THREE.MeshStandardMaterial({ 
             name: nombreOriginal, color: "#1a1a1a", roughness: 0.7, metalness: 0.2
