@@ -9,7 +9,12 @@ const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [numbe
   "ps1": { repeat: [1.17, 1], offset: [-0.17, 0] },
   "ps2": {repeat: [1,1.07], offset: [0,-0.09]},
   "ps3": {repeat: [1,1], offset: [0,-0.08]},
-  "ps4": {repeat: [1,1.05], offset: [0,-0.11]}
+  "ps4": {repeat: [1,1.1], offset: [0,-0.12]},
+  "ps5": {repeat: [1,1.08], offset: [0,-0.1]},
+  "psp": {repeat: [1,1.08], offset: [0,-0.1]},
+  "psvita": {repeat: [1,1.06], offset: [0,-0.08]},
+  "nes": {repeat: [1,1], offset: [0,0]}, // !!
+  "snes": {repeat: [1,1.65], offset: [0,-0.36]}
 };
 
 function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {
