@@ -142,11 +142,11 @@ export default function BusquedaPage() {
           <div style={{ 
             width: "100vw", 
             flex: 1,
-            maxHeight: "65vh",
+            maxHeight: "80vh",
             display: "flex", 
             justifyContent: "center", 
             alignItems: "center",
-            marginTop: "20px"
+            marginTop: "0px"
           }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
@@ -156,11 +156,7 @@ export default function BusquedaPage() {
             />
           </div>
 
-          <h2 style={{ color: "white", fontSize: "2rem", marginBottom: "20px", textAlign: "center", textShadow: "0 2px 5px rgba(0,0,0,0.8)" }}>
-            {focusedGame.titulo}
-          </h2>
-
-          <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px" }}>
+          <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px", margin: "5px"}}>
             <div className="window-body" style={{ display: "flex", gap: "20px", alignItems: "center", margin: 0 }}>
               
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>

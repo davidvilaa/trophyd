@@ -69,7 +69,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
   const consolaFinal = consola ? consola : "pc";
   const templatePath = `/models/${consolaFinal}/${consolaFinal}_1.png`;
   const lomoPath = `/models/${consolaFinal}/${consolaFinal}_2.png`;
-  const contraPath = `/models/${consolaFinal}/${consolaFinal}_3.png`;
+  const contraPath = `/models/3ds/3ds_3.png`;
 
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
   const [textureTemplate, setTextureTemplate] = useState<THREE.Texture | null>(null);
@@ -105,14 +105,14 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
       lomoPath, 
       (tex) => { tex.colorSpace = THREE.SRGBColorSpace; tex.flipY = false; setTextureLomo(tex); },
       undefined,
-      (err) => console.warn("--> Lomo no encontrado:", lomoPath)
+      (err) => console.warn("Lomo no encontrado:", lomoPath)
     );
 
     loader.load(
       contraPath, 
       (tex) => { tex.colorSpace = THREE.SRGBColorSpace; tex.flipY = false; setTextureContra(tex); },
       undefined,
-      (err) => console.warn("--> Contraportada no encontrada:", contraPath)
+      (err) => console.warn("Contraportada no encontrada:", contraPath)
     );
   }, [coverUrl, templatePath]);
 
@@ -189,26 +189,27 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
     if (!meshRef.current) return;
     let targetX = 0.05; 
     let targetY = -0.3;  
-    
     let targetScale = isFocused ? 1.5 : 1;
+    let offsetY = 0;
 
     if (isLogging) {
       targetY = Math.PI; 
       targetX = 0; 
       targetScale = 5;
-    } else if (hovered) {
+      offsetY = -7.1;
+    } 
+    else if (hovered) {
       targetY = state.pointer.x * 0.6; 
       targetX = 0.05 + (-state.pointer.y * 0.4);
       targetScale = isFocused ? 1.5 : 1.15;
     }
 
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
-
-    meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
-    
     const currentScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.1);
     meshRef.current.scale.set(currentScale, currentScale, currentScale);
+    const targetPosY = 0 + offsetY;
+    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetPosY, 0.1);
   });
 
   return (
