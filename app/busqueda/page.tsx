@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
@@ -23,6 +24,24 @@ export default function BusquedaPage() {
 
   const mainRef = useRef<HTMLElement>(null!);
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  const router = useRouter();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const comprobarSesion = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.warn("Usuario no autenticado, redirigiendo a home...");
+        router.push("/");
+      } else {
+        setUserId(session.user.id);
+      }
+    };
+
+    comprobarSesion();
+  }, [router]);
 
   useEffect(() => {
     if (!query) return;
@@ -115,18 +134,22 @@ export default function BusquedaPage() {
         gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", 
         gap: "30px 15px", justifyItems: "center"
       }}>
-        {juegos.map((juego, index) => (
-          <div key={`${juego.id}-${index}`} style={{ 
-            width: "100%", height: "280px", display: "flex",
-            justifyContent: "center", alignItems: "center", position: "relative"
-          }}>
-            <GameCard3D 
-              coverUrl={juego.portada} 
-              consola={juego.consola}
-              onClick={() => handleBoxClick(juego)} 
-            />
-          </div>
-        ))}
+        {juegos.map((juego, index) => {
+          if (!juego) return null; 
+
+          return (
+            <div key={`${juego.id}-${index}`} style={{ 
+              width: "100%", height: "280px", display: "flex",
+              justifyContent: "center", alignItems: "center", position: "relative"
+            }}>
+              <GameCard3D 
+                coverUrl={juego.portada} 
+                consola={juego.consola}
+                onClick={() => handleBoxClick(juego)} 
+              />
+            </div>
+          );
+        })}
       </div>
 
       <div ref={observerTarget} style={{ height: "20px", width: "100%", marginTop: "20px" }}>
@@ -150,11 +173,12 @@ export default function BusquedaPage() {
             marginTop: "0px"
           }}>
             <GameCard3D 
-              juego = {focusedGame}
               coverUrl={focusedGame.portada} 
               consola={consolaFocus}
               isFocused={true} 
               isLogging={isLogging}
+              juego={focusedGame} 
+              userId={userId}
             />
           </div>
 

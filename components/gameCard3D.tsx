@@ -61,7 +61,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego}: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any }) {
+function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId }: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -99,7 +99,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego}: 
       const velocidad = 0.01;
       scrollY.current += e.deltaY * velocidad; 
       
-      const limiteArriba = 6.2;  
+      const limiteArriba = 6.7;  
       const limiteAbajo = 0;
 
       if (scrollY.current > limiteArriba) scrollY.current = limiteArriba;
@@ -247,19 +247,27 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego}: 
   });
 
   const handleGuardarEnBBDD = () => {
+    // Si por algún motivo el ID no ha llegado, cortamos el rollo
+    if (!userId) {
+      alert("Error: No se ha detectado tu usuario. Inicia sesión de nuevo.");
+      return;
+    }
+
     const payload = {
       game_data: {
         id: juego?.id,
         title: juego?.titulo,
         cover_image_url: juego?.portada,
-        consola: consolaFinal
+        consola: consolaFinal 
       },
       user_game_data: {
+        user_id: userId,
+        game_id: juego?.id,
         status: status,
         difficulty: difficulty,
         rating: rating,
         time_played: timePlayed,
-        isFauvorite: isFavorite,
+        isFauvorite: isFavorite, 
         start_date: startDate || null,
         finish_date: endDate || null,
         review: review
@@ -267,7 +275,6 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego}: 
     };
 
     console.log("¡PAQUETE LISTO PARA SUPABASE!", payload);
-    alert("Revisa la consola (F12) para ver el paquete JSON");
   };
 
   return (
@@ -279,7 +286,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego}: 
       {isLogging && (
         <Html
           transform
-          position={[0.0, 0.70, -0.30]} 
+          position={[0.0, 0.65, -0.30]} 
           rotation={[0, Math.PI, 0]}
           scale={0.23}
         >
@@ -463,7 +470,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego}: 
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null }) {
   const [hovered, setHovered] = useState(false);
 
   const escena3D = (
@@ -475,13 +482,14 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
       <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
         <Suspense fallback={null}>
           <Model 
-            url="/models/carcasa.glb?v=10" 
-              juego={juego}  
+              url="/models/carcasa.glb?v=10" 
               coverUrl={coverUrl} 
               hovered={hovered} 
               consola={consola}
               isFocused={isFocused}
-              isLogging={isLogging}      
+              isLogging={isLogging}
+              juego={juego}
+              userId={userId}
           />
         </Suspense>
       </Float>
