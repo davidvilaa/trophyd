@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View, Html } from "@react-three/drei";
+import { supabase } from "@/lib/supabase";
 import * as THREE from "three";
 
 const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [number, number] }> = {
@@ -246,35 +247,53 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
     meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetPosY, 0.1);
   });
 
-  const handleGuardarEnBBDD = () => {
-    // Si por algún motivo el ID no ha llegado, cortamos el rollo
-    if (!userId) {
-      alert("Error: No se ha detectado tu usuario. Inicia sesión de nuevo.");
+  const handleGuardarEnBBDD = async () => {
+    if (!userId || !juego) {
+      alert("Error: Faltan datos del usuario o del juego.");
       return;
     }
 
-    const payload = {
-      game_data: {
-        id: juego?.id,
-        title: juego?.titulo,
-        cover_image_url: juego?.portada,
-        consola: consolaFinal 
-      },
-      user_game_data: {
-        user_id: userId,
-        game_id: juego?.id,
-        status: status,
-        difficulty: difficulty,
-        rating: rating,
-        time_played: timePlayed,
-        isFauvorite: isFavorite, 
-        start_date: startDate || null,
-        finish_date: endDate || null,
-        review: review
-      }
-    };
+    try {
+      const { error: errorGame } = await supabase
+        .from('games')
+        .upsert({
+          id: juego.id,
+          title: juego.titulo,
+          cover_image_url: juego.portada
+        }, { onConflict: 'id' });
 
-    console.log("¡PAQUETE LISTO PARA SUPABASE!", payload);
+      if (errorGame) {
+        console.error("Error insertando en 'games':", errorGame);
+        throw errorGame;
+      }
+
+      const { error: errorUserGame } = await supabase
+        .from('user_games')
+        .upsert({
+          user_id: userId,
+          game_id: juego.id,
+          status: status,
+          difficulty: difficulty,
+          rating: rating,
+          time_played: timePlayed,
+          isFavorite: isFavorite, 
+          start_date: startDate || null,
+          finish_date: endDate || null,
+          review: review
+        }); 
+
+      if (errorUserGame) {
+        console.error("Error real:", JSON.stringify(errorUserGame, null, 2));
+        throw errorUserGame;
+      }
+
+      console.log("¡Registro guardado correctamente!");
+      alert("¡Juego añadido a tu colección con éxito!");
+      
+    } catch (error) {
+      console.error("¡Peto algo conectando con Supabase!", error);
+      alert("Hubo un error al guardar en la BBDD. Revisa la consola (F12).");
+    }
   };
 
   return (
@@ -308,19 +327,19 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
               <fieldset style={{ marginBottom: "15px" }}>
                 <legend>Estado</legend>
                 <div className="field-row" style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-                  <input id="status-completed" type="radio" name="status" checked={status === "COMPLETED"} onChange={() => setStatus("COMPLETED")} />
+                  <input id="status-completed" type="radio" name="status" checked={status === "completed"} onChange={() => setStatus("completed")} />
                   <label htmlFor="status-completed" style={{ cursor: "pointer", paddingRight: "5px" }}>Completed</label>
                   
-                  <input id="status-playing" type="radio" name="status" checked={status === "PLAYING"} onChange={() => setStatus("PLAYING")} />
+                  <input id="status-playing" type="radio" name="status" checked={status === "playing"} onChange={() => setStatus("playing")} />
                   <label htmlFor="status-playing" style={{ cursor: "pointer", paddingRight: "5px" }}>Playing</label>
                   
-                  <input id="status-paused" type="radio" name="status" checked={status === "PAUSED"} onChange={() => setStatus("PAUSED")} />
+                  <input id="status-paused" type="radio" name="status" checked={status === "paused"} onChange={() => setStatus("paused")} />
                   <label htmlFor="status-paused" style={{ cursor: "pointer", paddingRight: "5px" }}>Paused</label>
                   
-                  <input id="status-dropped" type="radio" name="status" checked={status === "DROPPED"} onChange={() => setStatus("DROPPED")} />
+                  <input id="status-dropped" type="radio" name="status" checked={status === "dropped"} onChange={() => setStatus("dropped")} />
                   <label htmlFor="status-dropped" style={{ cursor: "pointer", paddingRight: "5px" }}>Dropped</label>
                   
-                  <input id="status-wishlist" type="radio" name="status" checked={status === "WISHLIST"} onChange={() => setStatus("WISHLIST")} />
+                  <input id="status-wishlist" type="radio" name="status" checked={status === "wishlist"} onChange={() => setStatus("wishlist")} />
                   <label htmlFor="status-wishlist" style={{ cursor: "pointer" }}>Wishlist</label>
                 </div>
               </fieldset>
