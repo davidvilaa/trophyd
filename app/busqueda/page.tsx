@@ -13,6 +13,7 @@ export default function BusquedaPage() {
 
   const [focusedGame, setFocusedGame] = useState<any | null>(null);
   const [consolaFocus, setConsolaFocus] = useState<string | null>(null);
+  const [isLogging, setIsLogging] = useState(false);
   
   const [juegos, setJuegos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -126,13 +127,13 @@ export default function BusquedaPage() {
       {focusedGame && (
         <div style={{
           position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-          backgroundColor: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(5px)", // !!
+          backgroundColor: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(5px)",
           zIndex: 100, display: "flex", flexDirection: "column",
           justifyContent: "center", alignItems: "center"
         }}>
           
           <button 
-            onClick={() => setFocusedGame(null)}
+            onClick={() => { setFocusedGame(null); setIsLogging(false); }}
             style={{ position: "absolute", top: "30px", right: "40px", zIndex: 110, padding: "5px 15px", cursor: "pointer" }}
           >
             Cerrar
@@ -143,6 +144,7 @@ export default function BusquedaPage() {
               coverUrl={focusedGame.portada} 
               consola={consolaFocus}
               isFocused={true} 
+              isLogging={isLogging}
             />
           </div>
 
@@ -196,10 +198,10 @@ export default function BusquedaPage() {
               </div>
 
               <button 
-                onClick={() => alert("¡Siguiente paso: Girar 180º y mostrar el form!")}
+                onClick={() => setIsLogging(!isLogging)}
                 style={{ fontWeight: "bold", padding: "5px 15px", cursor: "pointer" }}
               >
-                Loguear Juego
+                {isLogging ? "Volver a Portada" : "Loguear Juego"}
               </button>
 
             </div>

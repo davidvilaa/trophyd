@@ -61,7 +61,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola, isFocused}: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean }) {
+function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean   }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -189,10 +189,14 @@ function Model({ url, coverUrl, hovered, consola, isFocused}: { url: string, cov
     if (!meshRef.current) return;
     let targetX = 0.05; 
     let targetY = -0.3;  
-
+    
     let targetScale = 1;
 
-    if (hovered) {
+    if (isLogging) {
+      targetY = Math.PI; 
+      targetX = 0; 
+      targetScale = 1;
+    } else if (hovered) {
       targetY = state.pointer.x * 0.6; 
       targetX = 0.05 + (-state.pointer.y * 0.4);
       targetScale = isFocused ? 1 : 1.15;
@@ -214,7 +218,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused}: { url: string, cov
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean }) {
   const [hovered, setHovered] = useState(false);
 
   const escena3D = (
@@ -227,10 +231,11 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
         <Suspense fallback={null}>
           <Model 
             url="/models/carcasa.glb?v=10" 
-            coverUrl={coverUrl} 
-            hovered={hovered} 
-            consola={consola}
-            isFocused={isFocused}
+              coverUrl={coverUrl} 
+              hovered={hovered} 
+              consola={consola}
+              isFocused={isFocused}
+              isLogging={isLogging}
           />
         </Suspense>
       </Float>
