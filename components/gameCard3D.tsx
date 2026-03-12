@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View } from "@react-three/drei";
+import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View, Html } from "@react-three/drei";
 import * as THREE from "three";
 
 const AJUSTES_PORTADA: Record<string, { repeat: [number, number], offset: [number, number] }> = {
@@ -214,6 +214,46 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
       <Center>
         <primitive object={clonedScene} scale={escalaModelo} rotation={[0, 0, 0]} />
       </Center>
+
+      {isLogging && (
+        <Html
+          transform
+          position={[0, 0, -0.25]}
+          rotation={[0, Math.PI, 0]}
+          scale={0.25}
+        >
+          <div 
+            className="window"
+            style={{ 
+              width: "280px", 
+              padding: "15px", 
+              background: "#ece9d8",
+              boxShadow: "0px 10px 30px rgba(0,0,0,0.8)" 
+            }}
+          >
+            <div className="title-bar" style={{ marginBottom: "10px" }}>
+              <div className="title-bar-text">Añadir a mi colección</div>
+            </div>
+            
+            <div className="window-body">
+              <p style={{ margin: "0 0 10px 0", fontSize: "14px", color: "black" }}>
+                ¿Qué te ha parecido <b>{consolaFinal.toUpperCase()}</b>?
+              </p>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <input 
+                  type="text" 
+                  placeholder="Tu opinión o nota aquí..." 
+                  style={{ width: "100%", padding: "5px", boxSizing: "border-box" }}
+                />
+                <button style={{ cursor: "pointer", fontWeight: "bold" }}>
+                  Guardar en Base de Datos
+                </button>
+              </div>
+            </div>
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
