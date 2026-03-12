@@ -145,7 +145,7 @@ export default function BusquedaPage() {
               <GameCard3D 
                 coverUrl={juego.portada} 
                 consola={juego.consola}
-                onClick={() => handleBoxClick(juego)} 
+                onClick={() => handleBoxClick(juego)}
               />
             </div>
           );
@@ -179,6 +179,7 @@ export default function BusquedaPage() {
               isLogging={isLogging}
               juego={focusedGame} 
               userId={userId}
+              onSaveSuccess={() => {setIsLogging(false); setFocusedGame(null);}} 
             />
           </div>
 

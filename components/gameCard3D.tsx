@@ -62,7 +62,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId }: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null }) {
+function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId, onSaveSuccess }: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -283,16 +283,17 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
         }); 
 
       if (errorUserGame) {
-        console.error("Error real:", JSON.stringify(errorUserGame, null, 2));
         throw errorUserGame;
       }
 
       console.log("¡Registro guardado correctamente!");
-      alert("¡Juego añadido a tu colección con éxito!");
-      
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
+
     } catch (error) {
       console.error("¡Peto algo conectando con Supabase!", error);
-      alert("Hubo un error al guardar en la BBDD. Revisa la consola (F12).");
+      alert("Hubo un error al guardar en la BBDD.");
     }
   };
 
@@ -489,7 +490,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId, onSaveSuccess }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void   }) {
   const [hovered, setHovered] = useState(false);
 
   const escena3D = (
@@ -509,6 +510,7 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
               isLogging={isLogging}
               juego={juego}
               userId={userId}
+              onSaveSuccess={onSaveSuccess}
           />
         </Suspense>
       </Float>
