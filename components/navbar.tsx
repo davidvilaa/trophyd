@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Gamepad2, User, Settings, LogOut, ChevronDown } from "lucide-react"; 
+import { Trophy, User, Settings, LogOut, ChevronDown } from "lucide-react"; 
 
 export default function Navbar() {
   const router = useRouter();
@@ -86,9 +86,9 @@ useEffect(() => {
         alignItems: "center" 
       }}>
         <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-          <Gamepad2 style={{ width: "32px", height: "32px", color: "#8CB4BA", filter: "drop-shadow(0 2px 2px rgba(255,255,255,0.6))" }} />
+          <Trophy style={{ width: "32px", height: "32px", color: "#BBBBBB", filter: "drop-shadow(0 2px 2px rgba(255,255,255,0.6))" }} />
           <span style={{ fontSize: "1.5rem", fontWeight: "900", color: "#000", textShadow: "0 0 5px rgba(255,255,255,0.8), 0 1px 1px rgba(255,255,255,1)" }}>
-            Trophy<span style={{ color: "#8CB4BA" }}>d</span>
+            Trophy<span style={{ color: "#BBBBBB" }}>d</span>
           </span>
         </Link>
 

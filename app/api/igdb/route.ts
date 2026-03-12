@@ -8,10 +8,11 @@ const PLATAFORMAS_MAP: Record<number, string> = {
   11: "xbox", 12: "xbox360", 49: "xboxone", 169: "xboxseriesxs"
 };
 
-const PRIORIDAD_PLATAFORMAS = [ // Orden de prioridad; plataformas retro primero
-  18, 33, 19,  22, 7, 4, 24, 8, 21, 11, 20, 38, 12, 9,  
-  5, 37, 46, 41, 48, 49, 130, 167,169, 508, 6
-];
+const CONSOLAS_YEARS: Record<number, number> = {
+  18: 1983, 33: 1989, 19: 1990, 22: 1998,7:  1994, 4:  1996, 24: 2001, 8:  2000, 21: 2001, 11: 2001, 20: 2004, 
+  38: 2004, 12: 2005,9:  2006, 5:  2006, 37: 2011, 46: 2011,41: 2012, 48: 2013, 49: 2013,130: 2017,167: 2020, 
+  169: 2020, 508: 2025, 6:  2000
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
     const accessToken = tokenData.access_token;
     const palabraLimpia = query.trim();
 
-    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id, total_rating_count, category, platforms; limit 500;`;
+    const igdbQuery = `search "${palabraLimpia}"; fields name, cover.image_id, total_rating_count, category, platforms, first_release_date; limit 500;`;
 
     const igdbRes = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
@@ -84,22 +85,27 @@ export async function GET(request: Request) {
     const juegosFormateados = juegosPaginados.map((juego: any) => {
       let consolaAsignada = null;
       
+      let anioJuego = 2000;
+      if (juego.first_release_date) {
+        anioJuego = new Date(juego.first_release_date * 1000).getFullYear();
+      }
+
       if (juego.platforms) {
-        const plataformasOrdenadas = juego.platforms.sort((a: number, b: number) => {
-          const indexA = PRIORIDAD_PLATAFORMAS.indexOf(a);
-          const indexB = PRIORIDAD_PLATAFORMAS.indexOf(b);
+        const plataformasConocidas = juego.platforms.filter((platID: number) => PLATAFORMAS_MAP[platID]);
+
+        plataformasConocidas.sort((a: number, b: number) => {
+          const anioA = CONSOLAS_YEARS[a] || 2000;
+          const anioB = CONSOLAS_YEARS[b] || 2000;
           
-          const pesoA = indexA === -1 ? 999 : indexA;
-          const pesoB = indexB === -1 ? 999 : indexB;
+          const distanciaA = Math.abs(anioJuego - anioA);
+          const distanciaB = Math.abs(anioJuego - anioB);
           
-          return pesoA - pesoB;
+          return distanciaA - distanciaB;
         });
 
-        for (const platID of plataformasOrdenadas) {
-          if (PLATAFORMAS_MAP[platID]) {
-            consolaAsignada = PLATAFORMAS_MAP[platID];
-            break;
-          }
+        if (plataformasConocidas.length > 0) {
+          const idGanador = plataformasConocidas[0];
+          consolaAsignada = PLATAFORMAS_MAP[idGanador];
         }
       }
 
