@@ -83,6 +83,12 @@ export async function GET(request: Request) {
     const juegosPaginados = juegosValidos.slice(offset, offset + limit);
 
     const juegosFormateados = juegosPaginados.map((juego: any) => {
+      const opcionesConsolas = juego.platforms
+        ? juego.platforms
+            .map((id: number) => PLATAFORMAS_MAP[id])
+            .filter((nombre: string) => nombre != null)
+        : [];
+
       let consolaAsignada = null;
       
       let anioJuego = 2000;
@@ -90,30 +96,22 @@ export async function GET(request: Request) {
         anioJuego = new Date(juego.first_release_date * 1000).getFullYear();
       }
 
-      if (juego.platforms) {
-        const plataformasConocidas = juego.platforms.filter((platID: number) => PLATAFORMAS_MAP[platID]);
-
-        plataformasConocidas.sort((a: number, b: number) => {
-          const anioA = CONSOLAS_YEARS[a] || 2000;
-          const anioB = CONSOLAS_YEARS[b] || 2000;
-          
-          const distanciaA = Math.abs(anioJuego - anioA);
-          const distanciaB = Math.abs(anioJuego - anioB);
-          
-          return distanciaA - distanciaB;
+      if (opcionesConsolas.length > 0) {
+        const plataformasIDs = juego.platforms.filter((id: number) => PLATAFORMAS_MAP[id]);
+        plataformasIDs.sort((a: number, b: number) => {
+          const distA = Math.abs(anioJuego - (CONSOLAS_YEARS[a] || 2000));
+          const distB = Math.abs(anioJuego - (CONSOLAS_YEARS[b] || 2000));
+          return distA - distB;
         });
-
-        if (plataformasConocidas.length > 0) {
-          const idGanador = plataformasConocidas[0];
-          consolaAsignada = PLATAFORMAS_MAP[idGanador];
-        }
+        consolaAsignada = PLATAFORMAS_MAP[plataformasIDs[0]];
       }
 
       return {
         id: juego.id,
         titulo: juego.name,
         portada: `https://images.igdb.com/igdb/image/upload/t_cover_big/${juego.cover.image_id}.jpg`,
-        consola: consolaAsignada
+        consola: consolaAsignada,
+        todasLasConsolas: [...new Set(opcionesConsolas)]
       };
     });
 

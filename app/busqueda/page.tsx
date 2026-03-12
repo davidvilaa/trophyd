@@ -153,15 +153,21 @@ export default function BusquedaPage() {
             <select 
               value={consolaFocus || "pc"} 
               onChange={(e) => setConsolaFocus(e.target.value)}
-              style={{ padding: "12px 20px", borderRadius: "10px", background: "#222", color: "white", border: "1px solid #555", fontSize: "16px", cursor: "pointer", outline: "none" }}
+              style={{ 
+                padding: "12px 20px", borderRadius: "10px", background: "#222", 
+                color: "white", border: "1px solid #555", fontSize: "16px", 
+                cursor: "pointer", outline: "none" 
+              }}
             >
-              <option value="ps4">PlayStation 4</option>
-              <option value="ps5">PlayStation 5</option>
-              <option value="nds">Nintendo DS</option>
-              <option value="ps1">PlayStation 1</option>
-              <option value="gamecube">GameCube</option>
-              <option value="xbox360">Xbox 360</option>
-              <option value="pc">PC</option>
+              {focusedGame.todasLasConsolas && focusedGame.todasLasConsolas.length > 0 ? (
+                focusedGame.todasLasConsolas.map((c: string) => (
+                  <option key={c} value={c}>
+                    {c.toUpperCase()}
+                  </option>
+                ))
+              ) : (
+                <option value="pc">PC</option>
+              )}
             </select>
 
             <button 
