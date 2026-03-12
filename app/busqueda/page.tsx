@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
+import {MoveLeft, MoveRight} from "lucide-react";
 
 export default function BusquedaPage() {
   const searchParams = useSearchParams();
@@ -125,18 +126,19 @@ export default function BusquedaPage() {
       {focusedGame && (
         <div style={{
           position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-          backgroundColor: "rgba(0, 0, 0, 0.75)", backdropFilter: "blur(15px)", // Cristal borroso oscuro
+          backgroundColor: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(5px)", // !!
           zIndex: 100, display: "flex", flexDirection: "column",
           justifyContent: "center", alignItems: "center"
         }}>
+          
           <button 
             onClick={() => setFocusedGame(null)}
-            style={{ position: "absolute", top: "40px", right: "50px", fontSize: "30px", color: "white", background: "none", border: "none", cursor: "pointer", zIndex: 110 }}
+            style={{ position: "absolute", top: "30px", right: "40px", zIndex: 110, padding: "5px 15px", cursor: "pointer" }}
           >
-            ✕
+            Cerrar
           </button>
 
-          <div style={{ width: "350px", height: "500px", marginBottom: "20px" }}>
+          <div style={{ width: "350px", height: "500px", marginBottom: "15px" }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
               consola={consolaFocus}
@@ -144,40 +146,65 @@ export default function BusquedaPage() {
             />
           </div>
 
-          <h2 style={{ color: "white", fontSize: "2.5rem", marginBottom: "30px", textAlign: "center", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+          <h2 style={{ color: "white", fontSize: "2rem", marginBottom: "20px", textAlign: "center", textShadow: "0 2px 5px rgba(0,0,0,0.8)" }}>
             {focusedGame.titulo}
           </h2>
 
-          <div style={{ display: "flex", gap: "20px", alignItems: "center", zIndex: 110 }}>
-            
-            <select 
-              value={consolaFocus || "pc"} 
-              onChange={(e) => setConsolaFocus(e.target.value)}
-              style={{ 
-                padding: "12px 20px", borderRadius: "10px", background: "#222", 
-                color: "white", border: "1px solid #555", fontSize: "16px", 
-                cursor: "pointer", outline: "none" 
-              }}
-            >
-              {focusedGame.todasLasConsolas && focusedGame.todasLasConsolas.length > 0 ? (
-                focusedGame.todasLasConsolas.map((c: string) => (
-                  <option key={c} value={c}>
-                    {c.toUpperCase()}
-                  </option>
-                ))
-              ) : (
-                <option value="pc">PC</option>
-              )}
-            </select>
+          <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px" }}>
+            <div className="window-body" style={{ display: "flex", gap: "20px", alignItems: "center", margin: 0 }}>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <button 
+                  onClick={() => {
+                    const consolas = focusedGame.todasLasConsolas?.length > 0 ? focusedGame.todasLasConsolas : ["pc"];
+                    const index = consolas.indexOf(consolaFocus || "pc");
+                    const prevIndex = index <= 0 ? consolas.length - 1 : index - 1;
+                    setConsolaFocus(consolas[prevIndex]);
+                  }}
+                  style={{ minWidth: "30px", cursor: "pointer" }}
+                >
+                  <MoveLeft/>
+                </button>
 
-            <button 
-              onClick={() => alert("¡Siguiente paso: Girar 180º y mostrar el form!")}
-              style={{ padding: "12px 30px", borderRadius: "10px", background: "#4ade80", color: "#111", border: "none", fontSize: "18px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 15px rgba(74, 222, 128, 0.4)" }}
-            >
-              Loguear Juego
-            </button>
-            
+                <select 
+                  value={consolaFocus || "pc"} 
+                  onChange={(e) => setConsolaFocus(e.target.value)}
+                  style={{ minWidth: "160px", cursor: "pointer", padding: "3px" }}
+                >
+                  {focusedGame.todasLasConsolas && focusedGame.todasLasConsolas.length > 0 ? (
+                    focusedGame.todasLasConsolas.map((c: string) => (
+                      <option key={c} value={c}>
+                        {c.toUpperCase()}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="pc">PC</option>
+                  )}
+                </select>
+
+                <button 
+                  onClick={() => {
+                    const consolas = focusedGame.todasLasConsolas?.length > 0 ? focusedGame.todasLasConsolas : ["pc"];
+                    const index = consolas.indexOf(consolaFocus || "pc");
+                    const nextIndex = index >= consolas.length - 1 ? 0 : index + 1;
+                    setConsolaFocus(consolas[nextIndex]);
+                  }}
+                  style={{ minWidth: "30px", cursor: "pointer" }}
+                >
+                  <MoveRight/>
+                </button>
+              </div>
+
+              <button 
+                onClick={() => alert("¡Siguiente paso: Girar 180º y mostrar el form!")}
+                style={{ fontWeight: "bold", padding: "5px 15px", cursor: "pointer" }}
+              >
+                Loguear Juego
+              </button>
+
+            </div>
           </div>
+
         </div>
       )}
 
