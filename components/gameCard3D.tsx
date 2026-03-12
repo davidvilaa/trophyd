@@ -190,17 +190,19 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
     let targetX = 0.05; 
     let targetY = -0.3;  
     
-    let targetScale = 1;
+    let targetScale = isFocused ? 1.5 : 1;
 
     if (isLogging) {
       targetY = Math.PI; 
       targetX = 0; 
-      targetScale = 1;
+      targetScale = 5;
     } else if (hovered) {
       targetY = state.pointer.x * 0.6; 
       targetX = 0.05 + (-state.pointer.y * 0.4);
-      targetScale = isFocused ? 1 : 1.15;
+      targetScale = isFocused ? 1.5 : 1.15;
     }
+
+    meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
 
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
@@ -220,7 +222,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
           transform
           position={[0, 0, -0.25]}
           rotation={[0, Math.PI, 0]}
-          scale={0.25}
+          scale={0.2}
         >
           <div 
             className="window"

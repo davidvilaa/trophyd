@@ -139,7 +139,15 @@ export default function BusquedaPage() {
             Cerrar
           </button>
 
-          <div style={{ width: "350px", height: "500px", marginBottom: "15px" }}>
+          <div style={{ 
+            width: "100vw", 
+            flex: 1,
+            maxHeight: "65vh",
+            display: "flex", 
+            justifyContent: "center", 
+            alignItems: "center",
+            marginTop: "20px"
+          }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
               consola={consolaFocus}
