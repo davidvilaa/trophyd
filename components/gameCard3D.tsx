@@ -61,7 +61,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean   }) {
+function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego}: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -80,6 +80,13 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0); 
   const [isFavorite, setIsFavorite] = useState(false);
+
+  const [status, setStatus] = useState("COMPLETED");
+  const [difficulty, setDifficulty] = useState(5);
+  const [timePlayed, setTimePlayed] = useState(0);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [review, setReview] = useState("");
 
   useEffect(() => {
     if (!isFocused) {
@@ -239,6 +246,30 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
     meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetPosY, 0.1);
   });
 
+  const handleGuardarEnBBDD = () => {
+    const payload = {
+      game_data: {
+        id: juego?.id,
+        title: juego?.titulo,
+        cover_image_url: juego?.portada,
+        consola: consolaFinal
+      },
+      user_game_data: {
+        status: status,
+        difficulty: difficulty,
+        rating: rating,
+        time_played: timePlayed,
+        isFauvorite: isFavorite,
+        start_date: startDate || null,
+        finish_date: endDate || null,
+        review: review
+      }
+    };
+
+    console.log("¡PAQUETE LISTO PARA SUPABASE!", payload);
+    alert("Revisa la consola (F12) para ver el paquete JSON");
+  };
+
   return (
     <group ref={meshRef}>
       <Center>
@@ -270,19 +301,19 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
               <fieldset style={{ marginBottom: "15px" }}>
                 <legend>Estado</legend>
                 <div className="field-row" style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-                  <input id="status-completed" type="radio" name="status" defaultChecked />
+                  <input id="status-completed" type="radio" name="status" checked={status === "COMPLETED"} onChange={() => setStatus("COMPLETED")} />
                   <label htmlFor="status-completed" style={{ cursor: "pointer", paddingRight: "5px" }}>Completed</label>
                   
-                  <input id="status-playing" type="radio" name="status" />
+                  <input id="status-playing" type="radio" name="status" checked={status === "PLAYING"} onChange={() => setStatus("PLAYING")} />
                   <label htmlFor="status-playing" style={{ cursor: "pointer", paddingRight: "5px" }}>Playing</label>
                   
-                  <input id="status-paused" type="radio" name="status" />
+                  <input id="status-paused" type="radio" name="status" checked={status === "PAUSED"} onChange={() => setStatus("PAUSED")} />
                   <label htmlFor="status-paused" style={{ cursor: "pointer", paddingRight: "5px" }}>Paused</label>
                   
-                  <input id="status-dropped" type="radio" name="status" />
+                  <input id="status-dropped" type="radio" name="status" checked={status === "DROPPED"} onChange={() => setStatus("DROPPED")} />
                   <label htmlFor="status-dropped" style={{ cursor: "pointer", paddingRight: "5px" }}>Dropped</label>
                   
-                  <input id="status-wishlist" type="radio" name="status" />
+                  <input id="status-wishlist" type="radio" name="status" checked={status === "WISHLIST"} onChange={() => setStatus("WISHLIST")} />
                   <label htmlFor="status-wishlist" style={{ cursor: "pointer" }}>Wishlist</label>
                 </div>
               </fieldset>
@@ -293,7 +324,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
                   
                   <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                     <label>Dificultad:</label>
-                    <input type="number" min="1" max="10" defaultValue="5" style={{ width: "40px" }} />
+                    <input type="number" min="1" max="10" value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} style={{ width: "40px" }} />
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
@@ -343,7 +374,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
 
                   <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                     <label>Horas:</label>
-                    <input type="number" min="0" defaultValue="0" style={{ width: "50px" }} />
+                    <input type="number" min="0" value={timePlayed} onChange={(e) => setTimePlayed(Number(e.target.value))} style={{ width: "50px" }} />
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center" }}>
@@ -374,6 +405,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
                     <label style={{color: "#333" }}>Inicio:</label>
                     <input 
                       type="date" 
+                      value={startDate} onChange={(e) => setStartDate(e.target.value)}
                       style={{ 
                         fontFamily: "inherit",
                         padding: "4px 8px",
@@ -389,7 +421,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <label style={{color: "#333" }}>Fin:</label>
                     <input 
-                      type="date" 
+                      type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
                       style={{ 
                         fontFamily: "inherit",
                         padding: "4px 8px",
@@ -409,6 +441,8 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
                 <div className="field-row" style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "15px" }}>
                   <textarea 
                     rows={4} 
+                    value={review}
+                    onChange={(e) => setReview(e.target.value)}
                     placeholder="Escribe aquí tu opinión sobre el juego..."
                     style={{ width: "100%", resize: "none", boxSizing: "border-box", fontFamily: "inherit" }}
                   ></textarea>
@@ -416,7 +450,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
               </fieldset>
 
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
-                <button style={{ fontWeight: "bold", padding: "6px 20px", cursor: "pointer" }}>
+                <button onClick={handleGuardarEnBBDD} style={{ fontWeight: "bold", padding: "6px 20px", cursor: "pointer" }}>
                   Loguear en BBDD
                 </button>
               </div>
@@ -429,7 +463,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any }) {
   const [hovered, setHovered] = useState(false);
 
   const escena3D = (
@@ -442,11 +476,12 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
         <Suspense fallback={null}>
           <Model 
             url="/models/carcasa.glb?v=10" 
+              juego={juego}  
               coverUrl={coverUrl} 
               hovered={hovered} 
               consola={consola}
               isFocused={isFocused}
-              isLogging={isLogging}
+              isLogging={isLogging}      
           />
         </Suspense>
       </Float>

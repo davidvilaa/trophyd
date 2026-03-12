@@ -150,6 +150,7 @@ export default function BusquedaPage() {
             marginTop: "0px"
           }}>
             <GameCard3D 
+              juego = {focusedGame}
               coverUrl={focusedGame.portada} 
               consola={consolaFocus}
               isFocused={true} 
