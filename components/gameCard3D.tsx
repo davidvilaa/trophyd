@@ -239,12 +239,12 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
       targetScale = isFocused ? 1.5 : 1.15;
     }
 
-    meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
-    meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
-    const currentScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.1);
+    meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.04);
+    meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.04);
+    const currentScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.04);
     meshRef.current.scale.set(currentScale, currentScale, currentScale);
     const targetPosY = (isFocused ? scrollY.current : 0) + offsetY;
-    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetPosY, 0.1);
+    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetPosY, 0.04);
   });
 
   const handleGuardarEnBBDD = async () => {
