@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, Suspense } from "react";
-import { useFrame } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -61,7 +61,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: string, hovered: boolean, consola: string | null }) {
+function Model({ url, coverUrl, hovered, consola, isFocused}: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -189,12 +189,13 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
     if (!meshRef.current) return;
     let targetX = 0.05; 
     let targetY = -0.3;  
+
     let targetScale = 1;
 
     if (hovered) {
       targetY = state.pointer.x * 0.6; 
       targetX = 0.05 + (-state.pointer.y * 0.4);
-      targetScale = 1.15;
+      targetScale = isFocused ? 1 : 1.15;
     }
 
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.1);
@@ -213,8 +214,39 @@ function Model({ url, coverUrl, hovered, consola }: { url: string, coverUrl: str
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola}: { coverUrl: string, onClick: () => void, consola: string | null }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean }) {
   const [hovered, setHovered] = useState(false);
+
+  const escena3D = (
+    <>
+      <ambientLight intensity={1.2} />
+      <pointLight position={[10, 10, 10]} intensity={2} />
+      <Environment preset="city" />
+
+      <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
+        <Suspense fallback={null}>
+          <Model 
+            url="/models/carcasa.glb?v=10" 
+            coverUrl={coverUrl} 
+            hovered={hovered} 
+            consola={consola}
+            isFocused={isFocused}
+          />
+        </Suspense>
+      </Float>
+      <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={10} blur={2.5} />
+    </>
+  );
+
+  if (isFocused) {
+    return (
+      <div style={{ width: "100%", height: "100%", position: "relative", zIndex: 200 }}>
+        <Canvas camera={{ position: [0, 0, 22], fov: 20 }}>
+          {escena3D}
+        </Canvas>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -227,21 +259,7 @@ export default function GameCard3D({ coverUrl, onClick, consola}: { coverUrl: st
       onClick={onClick}
     >
       <View style={{ position: "absolute", top: "-25%", left: "-25%", width: "150%", height: "150%" }}>
-        <ambientLight intensity={1.2} />
-        <pointLight position={[10, 10, 10]} intensity={2} />
-        <Environment preset="city" />
-
-        <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
-          <Suspense fallback={null}>
-            <Model 
-              url="/models/carcasa.glb?v=10" 
-              coverUrl={coverUrl} 
-              hovered={hovered} 
-              consola={consola}
-            />
-          </Suspense>
-        </Float>
-        <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={10} blur={2.5} />
+        {escena3D}
       </View>
     </div>
   );

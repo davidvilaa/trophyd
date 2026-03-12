@@ -10,8 +10,8 @@ export default function BusquedaPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q");
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [juegoSeleccionado, setJuegoSeleccionado] = useState<string | null>(null);
+  const [focusedGame, setFocusedGame] = useState<any | null>(null);
+  const [consolaFocus, setConsolaFocus] = useState<string | null>(null);
   
   const [juegos, setJuegos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -91,9 +91,9 @@ export default function BusquedaPage() {
     };
   }, [hasMore, cargando]);
 
-  const handleBoxClick = (titulo: string) => {
-    setJuegoSeleccionado(titulo);
-    setIsOpen(true);
+  const handleBoxClick = (juego: any) => {
+    setFocusedGame(juego);
+    setConsolaFocus(juego.consola);
   };
 
   return (
@@ -112,7 +112,7 @@ export default function BusquedaPage() {
             <GameCard3D 
               coverUrl={juego.portada} 
               consola={juego.consola}
-              onClick={() => handleBoxClick(juego.titulo)} 
+              onClick={() => handleBoxClick(juego)} 
             />
           </div>
         ))}
@@ -122,18 +122,55 @@ export default function BusquedaPage() {
         {cargando && <p style={{ textAlign: "center", color: "white" }}>Cargando más juegos...</p>}
       </div>
 
-      {isOpen && juegoSeleccionado && (
-        <div className="window glass" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 100, width: "350px", boxShadow: "0 0 50px rgba(0,0,0,0.5)" }}>
-          <div className="title-bar">
-            <div className="title-bar-text">Loguear {juegoSeleccionado}</div>
-            <div className="title-bar-controls"><button aria-label="Close" onClick={() => setIsOpen(false)}></button></div>
+      {focusedGame && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+          backgroundColor: "rgba(0, 0, 0, 0.75)", backdropFilter: "blur(15px)", // Cristal borroso oscuro
+          zIndex: 100, display: "flex", flexDirection: "column",
+          justifyContent: "center", alignItems: "center"
+        }}>
+          <button 
+            onClick={() => setFocusedGame(null)}
+            style={{ position: "absolute", top: "40px", right: "50px", fontSize: "30px", color: "white", background: "none", border: "none", cursor: "pointer", zIndex: 110 }}
+          >
+            ✕
+          </button>
+
+          <div style={{ width: "350px", height: "500px", marginBottom: "20px" }}>
+            <GameCard3D 
+              coverUrl={focusedGame.portada} 
+              consola={consolaFocus}
+              isFocused={true} 
+            />
           </div>
-          <div className="window-body">
-            <p>Se ha abierto la carcasa. ¿Añadir a completados?</p>
-            <section className="field-row" style={{justifyContent: 'flex-end'}}>
-              <button onClick={() => setIsOpen(false)}>Cancelar</button>
-              <button className="default" onClick={() => { alert("¡Guardado!"); setIsOpen(false); }}>Confirmar</button>
-            </section>
+
+          <h2 style={{ color: "white", fontSize: "2.5rem", marginBottom: "30px", textAlign: "center", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+            {focusedGame.titulo}
+          </h2>
+
+          <div style={{ display: "flex", gap: "20px", alignItems: "center", zIndex: 110 }}>
+            
+            <select 
+              value={consolaFocus || "pc"} 
+              onChange={(e) => setConsolaFocus(e.target.value)}
+              style={{ padding: "12px 20px", borderRadius: "10px", background: "#222", color: "white", border: "1px solid #555", fontSize: "16px", cursor: "pointer", outline: "none" }}
+            >
+              <option value="ps4">PlayStation 4</option>
+              <option value="ps5">PlayStation 5</option>
+              <option value="nds">Nintendo DS</option>
+              <option value="ps1">PlayStation 1</option>
+              <option value="gamecube">GameCube</option>
+              <option value="xbox360">Xbox 360</option>
+              <option value="pc">PC</option>
+            </select>
+
+            <button 
+              onClick={() => alert("¡Siguiente paso: Girar 180º y mostrar el form!")}
+              style={{ padding: "12px 30px", borderRadius: "10px", background: "#4ade80", color: "#111", border: "none", fontSize: "18px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 15px rgba(74, 222, 128, 0.4)" }}
+            >
+              Loguear Juego
+            </button>
+            
           </div>
         </div>
       )}
