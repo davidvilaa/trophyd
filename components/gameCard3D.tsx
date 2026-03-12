@@ -76,6 +76,33 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
   const [textureLomo, setTextureLomo] = useState<THREE.Texture | null>(null);
   const [textureContra, setTextureContra] = useState<THREE.Texture | null>(null);
 
+  const scrollY = useRef(0);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0); 
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) {
+      scrollY.current = 0;
+      return;
+    }
+
+    const handleWheel = (e: WheelEvent) => {
+      if (!isLogging) return;
+      const velocidad = 0.01;
+      scrollY.current += e.deltaY * velocidad; 
+      
+      const limiteArriba = 6.2;  
+      const limiteAbajo = 0;
+
+      if (scrollY.current > limiteArriba) scrollY.current = limiteArriba;
+      if (scrollY.current < limiteAbajo) scrollY.current = limiteAbajo;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [isFocused, isLogging]);
+
   useEffect(() => {
     const loader = new THREE.TextureLoader();
     
@@ -208,7 +235,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetX, 0.1);
     const currentScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.1);
     meshRef.current.scale.set(currentScale, currentScale, currentScale);
-    const targetPosY = 0 + offsetY;
+    const targetPosY = (isFocused ? scrollY.current : 0) + offsetY;
     meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetPosY, 0.1);
   });
 
@@ -221,38 +248,179 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging}: { url: 
       {isLogging && (
         <Html
           transform
-          position={[0, 0, -0.25]}
+          position={[0.0, 0.70, -0.30]} 
           rotation={[0, Math.PI, 0]}
-          scale={0.2}
+          scale={0.23}
         >
           <div 
             className="window"
             style={{ 
-              width: "280px", 
-              padding: "15px", 
+              width: "540px",
+              padding: "6px", 
               background: "#ece9d8",
               boxShadow: "0px 10px 30px rgba(0,0,0,0.8)" 
             }}
           >
             <div className="title-bar" style={{ marginBottom: "10px" }}>
-              <div className="title-bar-text">Añadir a mi colección</div>
+              <div className="title-bar-text">Registro de Partida - BBDD</div>
             </div>
             
-            <div className="window-body">
-              <p style={{ margin: "0 0 10px 0", fontSize: "14px", color: "black" }}>
-                ¿Qué te ha parecido <b>{consolaFinal.toUpperCase()}</b>?
-              </p>
+            <div className="window-body" style={{ margin: "10px" }}>
               
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <input 
-                  type="text" 
-                  placeholder="Tu opinión o nota aquí..." 
-                  style={{ width: "100%", padding: "5px", boxSizing: "border-box" }}
-                />
-                <button style={{ cursor: "pointer", fontWeight: "bold" }}>
-                  Guardar en Base de Datos
+              <fieldset style={{ marginBottom: "15px" }}>
+                <legend>Estado</legend>
+                <div className="field-row" style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+                  <input id="status-completed" type="radio" name="status" defaultChecked />
+                  <label htmlFor="status-completed" style={{ cursor: "pointer", paddingRight: "5px" }}>Completed</label>
+                  
+                  <input id="status-playing" type="radio" name="status" />
+                  <label htmlFor="status-playing" style={{ cursor: "pointer", paddingRight: "5px" }}>Playing</label>
+                  
+                  <input id="status-paused" type="radio" name="status" />
+                  <label htmlFor="status-paused" style={{ cursor: "pointer", paddingRight: "5px" }}>Paused</label>
+                  
+                  <input id="status-dropped" type="radio" name="status" />
+                  <label htmlFor="status-dropped" style={{ cursor: "pointer", paddingRight: "5px" }}>Dropped</label>
+                  
+                  <input id="status-wishlist" type="radio" name="status" />
+                  <label htmlFor="status-wishlist" style={{ cursor: "pointer" }}>Wishlist</label>
+                </div>
+              </fieldset>
+
+              <fieldset style={{ marginBottom: "15px" }}>
+                <legend>Estadísticas</legend>
+                <div className="field-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                  
+                  <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                    <label>Dificultad:</label>
+                    <input type="number" min="1" max="10" defaultValue="5" style={{ width: "40px" }} />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                    <label style={{ marginRight: "5px" }}>Nota:</label>
+                    <div style={{ display: "flex" }}>
+                      {[1, 2, 3, 4, 5].map((starIndex) => {
+                        const valorMitad = starIndex - 0.5;
+                        const valorEntero = starIndex;
+
+                        return (
+                          <div key={starIndex} style={{ position: "relative", display: "inline-block", fontSize: "24px", lineHeight: "1" }}>
+                            
+                            <div
+                              onClick={() => setRating(valorMitad)}
+                              onMouseEnter={() => setHoverRating(valorMitad)}
+                              onMouseLeave={() => setHoverRating(0)}
+                              style={{ position: "absolute", left: 0, top: 0, width: "50%", height: "100%", cursor: "pointer", zIndex: 10 }}
+                            />
+                            
+                            <div
+                              onClick={() => setRating(valorEntero)}
+                              onMouseEnter={() => setHoverRating(valorEntero)}
+                              onMouseLeave={() => setHoverRating(0)}
+                              style={{ position: "absolute", right: 0, top: 0, width: "50%", height: "100%", cursor: "pointer", zIndex: 10 }}
+                            />
+
+                            <span style={{ color: "#9ca3af", pointerEvents: "none" }}>★</span>
+
+                            <span style={{
+                              position: "absolute",
+                              left: 0,
+                              top: 0,
+                              color: "#fbbf24",
+                              textShadow: "0 0 5px rgba(251, 191, 36, 0.6)",
+                              overflow: "hidden",
+                              width: (hoverRating || rating) >= valorEntero ? "100%" : (hoverRating || rating) >= valorMitad ? "50%" : "0%",
+                              pointerEvents: "none", 
+                              transition: "width 0.1s"
+                            }}>
+                              ★
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                    <label>Horas:</label>
+                    <input type="number" min="0" defaultValue="0" style={{ width: "50px" }} />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <button 
+                      type="button"
+                      onClick={() => setIsFavorite(!isFavorite)}
+                      style={{ 
+                        background: "transparent", border: "none", boxShadow: "none", minWidth: "auto",
+                        fontSize: "28px", lineHeight: "1", cursor: "pointer", padding: "0 5px",
+                        color: isFavorite ? "#dc2626" : "#9ca3af",
+                        transform: isFavorite ? "scale(1.15)" : "scale(1)",
+                        transition: "all 0.2s ease"
+                      }}
+                      title="Marcar como favorito"
+                    >
+                      ♥
+                    </button>
+                  </div>
+
+                </div>
+              </fieldset>
+
+              <fieldset style={{ marginBottom: "15px" }}>
+                <legend>Fechas</legend>
+                <div className="field-row" style={{ display: "flex", justifyContent: "space-around" }}>
+                  
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <label style={{color: "#333" }}>Inicio:</label>
+                    <input 
+                      type="date" 
+                      style={{ 
+                        fontFamily: "inherit",
+                        padding: "4px 8px",
+                        border: "1px solid #8e8f8f",
+                        borderRadius: "3px",
+                        backgroundColor: "white",
+                        boxShadow: "inset 1px 1px 2px rgba(0,0,0,0.1)",
+                        cursor: "pointer"
+                      }} 
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <label style={{color: "#333" }}>Fin:</label>
+                    <input 
+                      type="date" 
+                      style={{ 
+                        fontFamily: "inherit",
+                        padding: "4px 8px",
+                        border: "1px solid #8e8f8f",
+                        borderRadius: "3px",
+                        backgroundColor: "white",
+                        boxShadow: "inset 1px 1px 2px rgba(0,0,0,0.1)",
+                        cursor: "pointer"
+                      }} 
+                    />
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset style={{ marginBottom: "15px" }}>
+                <legend>Review</legend>
+                <div className="field-row" style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "15px" }}>
+                  <textarea 
+                    rows={4} 
+                    placeholder="Escribe aquí tu opinión sobre el juego..."
+                    style={{ width: "100%", resize: "none", boxSizing: "border-box", fontFamily: "inherit" }}
+                  ></textarea>
+                </div>
+              </fieldset>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+                <button style={{ fontWeight: "bold", padding: "6px 20px", cursor: "pointer" }}>
+                  Loguear en BBDD
                 </button>
               </div>
+
             </div>
           </div>
         </Html>

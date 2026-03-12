@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
-import {MoveLeft, MoveRight} from "lucide-react";
+import {MoveLeft, MoveRight, X} from "lucide-react";
 
 export default function BusquedaPage() {
   const searchParams = useSearchParams();
@@ -98,6 +98,15 @@ export default function BusquedaPage() {
     setConsolaFocus(juego.consola);
   };
 
+  useEffect(() => {
+    if (focusedGame) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => { document.body.style.overflow = "auto"; };
+  }, [focusedGame]);
+
   return (
     <main ref={mainRef} style={{ padding: "100px 20px 40px", minHeight: "100vh", position: "relative" }}>
 
@@ -131,14 +140,6 @@ export default function BusquedaPage() {
           zIndex: 100, display: "flex", flexDirection: "column",
           justifyContent: "center", alignItems: "center"
         }}>
-          
-          <button 
-            onClick={() => { setFocusedGame(null); setIsLogging(false); }}
-            style={{ position: "absolute", top: "30px", right: "40px", zIndex: 110, padding: "5px 15px", cursor: "pointer" }}
-          >
-            Cerrar
-          </button>
-
           <div style={{ 
             width: "100vw", 
             flex: 1,
@@ -157,8 +158,7 @@ export default function BusquedaPage() {
           </div>
 
           <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px", margin: "5px"}}>
-            <div className="window-body" style={{ display: "flex", gap: "20px", alignItems: "center", margin: 0 }}>
-              
+            <div className="window-body" style={{ display: "flex", gap: "15px", alignItems: "center", margin: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <button 
                   onClick={() => {
@@ -167,9 +167,9 @@ export default function BusquedaPage() {
                     const prevIndex = index <= 0 ? consolas.length - 1 : index - 1;
                     setConsolaFocus(consolas[prevIndex]);
                   }}
-                  style={{ minWidth: "30px", cursor: "pointer" }}
+                  style={{ minWidth: "30px", cursor: "pointer", padding: "2px" }}
                 >
-                  <MoveLeft/>
+                  <MoveLeft size={18} />
                 </button>
 
                 <select 
@@ -195,9 +195,9 @@ export default function BusquedaPage() {
                     const nextIndex = index >= consolas.length - 1 ? 0 : index + 1;
                     setConsolaFocus(consolas[nextIndex]);
                   }}
-                  style={{ minWidth: "30px", cursor: "pointer" }}
+                  style={{ minWidth: "30px", cursor: "pointer", padding: "2px" }}
                 >
-                  <MoveRight/>
+                  <MoveRight size={18} />
                 </button>
               </div>
 
@@ -208,9 +208,24 @@ export default function BusquedaPage() {
                 {isLogging ? "Volver a Portada" : "Loguear Juego"}
               </button>
 
+              <button 
+                onClick={() => { setFocusedGame(null); setIsLogging(false); }}
+                style={{ 
+                  minWidth: "40px", 
+                  padding: "4px", 
+                  cursor: "pointer", 
+                  color: "#dc2626",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                title="Cerrar Focus"
+              >
+                <X size={20} strokeWidth={4} />
+              </button>
+
             </div>
           </div>
-
         </div>
       )}
 
