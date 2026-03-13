@@ -10,14 +10,18 @@ export default function ConfigPage() {
   const nodeRef = useRef(null);
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
   
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [pfpUrl, setPfpUrl] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  const [newPassword, setNewPassword] = useState("");
+  const [correoActualForm1, setCorreoActualForm1] = useState("");
+  const [passActualForm1, setPassActualForm1] = useState("");
+  const [nuevoCorreo, setNuevoCorreo] = useState("");
+  const [correoActualForm2, setCorreoActualForm2] = useState("");
+  const [passActualForm2, setPassActualForm2] = useState("");
+  const [nuevaPass, setNuevaPass] = useState("");
   
   const [mensaje, setMensaje] = useState<{ tipo: "error" | "exito", texto: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -32,7 +36,7 @@ export default function ConfigPage() {
       }
 
       setUserId(session.user.id);
-      setEmail(session.user.email || "");
+      setCorreoActualForm1(session.user.email || "");
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -102,24 +106,49 @@ export default function ConfigPage() {
     }
   };
 
-  const handleGuardarSeguridad = async () => {
+  const handleCambiarEmail = async () => {
     setLoading(true);
     setMensaje(null);
     try {
-      if (email) {
-        const { error } = await supabase.auth.updateUser({ email: email });
-        if (error) throw error;
-      }
-      
-      if (newPassword) {
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) throw error;
-        setNewPassword("");
-      }
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: correoActualForm1,
+        password: passActualForm1,
+      });
 
-      setMensaje({ tipo: "exito", texto: "¡Datos de seguridad actualizados! (Revisa tu correo si cambiaste el email)" });
-    } catch (error) {
-      setMensaje({ tipo: "error", texto: "Error al actualizar la seguridad" });
+      if (authError) throw new Error("Las credenciales actuales son incorrectas.");
+
+      const { error: updateError } = await supabase.auth.updateUser({ email: nuevoCorreo });
+      if (updateError) throw updateError;
+
+      setMensaje({ tipo: "exito", texto: "¡Email actualizado! Revisa la bandeja de entrada del NUEVO correo para confirmarlo." });
+      
+      setCorreoActualForm1(""); setPassActualForm1(""); setNuevoCorreo("");
+    } catch (error: any) {
+      setMensaje({ tipo: "error", texto: error.message || "Error al cambiar el email." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCambiarPassword = async () => {
+    setLoading(true);
+    setMensaje(null);
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: correoActualForm2,
+        password: passActualForm2,
+      });
+
+      if (authError) throw new Error("El correo o contraseña actuales son incorrectos.");
+
+      const { error: updateError } = await supabase.auth.updateUser({ password: nuevaPass });
+      if (updateError) throw updateError;
+
+      setMensaje({ tipo: "exito", texto: "¡Contraseña actualizada con éxito!" });
+      
+      setCorreoActualForm2(""); setPassActualForm2(""); setNuevaPass("");
+    } catch (error: any) {
+      setMensaje({ tipo: "error", texto: error.message || "Error al cambiar la contraseña." });
     } finally {
       setLoading(false);
     }
@@ -132,7 +161,7 @@ export default function ConfigPage() {
         <div ref={nodeRef} className="window glass active" style={{ width: "100%", maxWidth: "550px", position: "absolute" }}>
           
           <div className="title-bar" style={{ cursor: "grab" }}>
-            <div className="title-bar-text">Panel de Control - Perfil</div>
+            <div className="title-bar-text">Ajustes</div>
             <div className="title-bar-controls">
               <button aria-label="Minimize"></button>
               <button aria-label="Maximize"></button>
@@ -173,24 +202,34 @@ export default function ConfigPage() {
                   </button>
                 </div>
 
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div className="field-row-stacked">
-                    <label htmlFor="nickname">Apodo (Nickname):</label>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "15px", justifyContent: "center" }}>
+                  
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <label htmlFor="nickname" style={{ width: "70px", textAlign: "right", marginRight: "10px" }}>
+                      Nickname:
+                    </label>
                     <input 
-                      id="nickname" type="text" 
-                      value={nickname} onChange={(e) => setNickname(e.target.value)}
+                      id="nickname" 
+                      type="text" 
+                      value={nickname} 
+                      onChange={(e) => setNickname(e.target.value)}
+                      style={{ flex: 1, fontFamily: "inherit" }}
                     />
                   </div>
                   
-                  <div className="field-row-stacked">
-                    <label htmlFor="bio">Sobre mí (Bio):</label>
+                  <div style={{ display: "flex", alignItems: "flex-start" }}>
+                    <label htmlFor="bio" style={{ width: "70px", textAlign: "right", marginRight: "10px", marginTop: "4px" }}>
+                      Bio:
+                    </label>
                     <textarea 
-                      id="bio" rows={3} style={{ resize: "none" }}
-                      value={bio} onChange={(e) => setBio(e.target.value)}
+                      id="bio" 
+                      rows={3} 
+                      value={bio} 
+                      onChange={(e) => setBio(e.target.value)}
+                      style={{ flex: 1, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }}
                     />
                   </div>
                 </div>
-
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
@@ -200,39 +239,54 @@ export default function ConfigPage() {
               </div>
             </fieldset>
 
-            <fieldset style={{ padding: "15px" }}>
+            <fieldset style={{ padding: "15px", display: "flex", flexDirection: "column", gap: "15px" }}>
               <legend>Seguridad y Cuenta</legend>
               
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div className="field-row-stacked">
-                  <label htmlFor="config-email">Correo Electrónico:</label>
-                  <input 
-                    id="config-email" type="email" 
-                    value={email} onChange={(e) => setEmail(e.target.value)}
-                  />
+              <fieldset style={{ padding: "10px" }}>
+                <legend>Cambiar Dirección de Correo</legend>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Correo Actual:</label>
+                    <input type="email" value={correoActualForm1} onChange={(e) => setCorreoActualForm1(e.target.value)} style={{ flex: 1 }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Contraseña Actual:</label>
+                    <input type="password" value={passActualForm1} onChange={(e) => setPassActualForm1(e.target.value)} style={{ flex: 1 }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
+                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px", fontWeight: "bold" }}>Nuevo Correo:</label>
+                    <input type="email" value={nuevoCorreo} onChange={(e) => setNuevoCorreo(e.target.value)} style={{ flex: 1 }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "5px" }}>
+                    <button onClick={handleCambiarEmail} disabled={loading}>Actualizar Correo</button>
+                  </div>
                 </div>
+              </fieldset>
 
-                <div className="field-row-stacked">
-                  <label htmlFor="config-password">Nueva Contraseña (déjalo en blanco si no quieres cambiarla):</label>
-                  <input 
-                    id="config-password" type="password" 
-                    value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Escribe la nueva contraseña..."
-                  />
+              <fieldset style={{ padding: "10px" }}>
+                <legend>Cambiar Contraseña</legend>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Correo Actual:</label>
+                    <input type="email" value={correoActualForm2} onChange={(e) => setCorreoActualForm2(e.target.value)} style={{ flex: 1 }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Contraseña Actual:</label>
+                    <input type="password" value={passActualForm2} onChange={(e) => setPassActualForm2(e.target.value)} style={{ flex: 1 }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
+                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px", fontWeight: "bold" }}>Nueva Contraseña:</label>
+                    <input type="password" value={nuevaPass} onChange={(e) => setNuevaPass(e.target.value)} style={{ flex: 1 }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "5px" }}>
+                    <button onClick={handleCambiarPassword} disabled={loading}>Actualizar Contraseña</button>
+                  </div>
                 </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "15px" }}>
-                <button onClick={handleGuardarSeguridad} disabled={loading}>
-                  Actualizar Credenciales
-                </button>
-              </div>
+              </fieldset>
             </fieldset>
-
           </div>
         </div>
       </Draggable>
-
     </div>
   );
 }
