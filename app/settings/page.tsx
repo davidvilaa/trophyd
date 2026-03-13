@@ -158,7 +158,7 @@ export default function ConfigPage() {
     <div className="min-h-screen flex items-center justify-center bg-[url('https://wallpapers.com/images/hd/artistic-blue-windows-7-cover-v0qwgn3ypat2bloy.jpg')] bg-cover bg-center overflow-hidden">
       
       <Draggable handle=".title-bar" nodeRef={nodeRef}>
-        <div ref={nodeRef} className="window glass active" style={{ width: "100%", maxWidth: "550px", position: "absolute" }}>
+        <div ref={nodeRef} className="window glass active" style={{ width: "100%", maxWidth: "700px", position: "absolute" }}>
           
           <div className="title-bar" style={{ cursor: "grab" }}>
             <div className="title-bar-text">Ajustes</div>
@@ -187,23 +187,21 @@ export default function ConfigPage() {
 
             <fieldset style={{ marginBottom: "15px", padding: "15px" }}>
               <legend>Información Pública</legend>
-              <div style={{ display: "flex", gap: "20px" }}>
-                
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", width: "100px" }}>
+              <div style={{ display: "flex", gap: "20px", alignItems: "stretch" }}>                
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", width: "100px", gap: "10px" }}>
                   <div style={{ 
                     width: "80px", height: "80px", border: "2px inset #fff", backgroundColor: "#ccc",
                     backgroundImage: `url(${pfpUrl || 'https://www.gravatar.com/avatar/0?d=mp&f=y'})`,
-                    backgroundSize: "cover", backgroundPosition: "center"
+                    backgroundSize: "cover", backgroundPosition: "center", flexShrink: 0
                   }}></div>
                   
                   <input type="file" id="avatar-upload" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
-                  <button onClick={() => document.getElementById("avatar-upload")?.click()} disabled={uploadingAvatar}>
-                    {uploadingAvatar ? "Subiendo..." : "Cambiar foto"}
+                  <button onClick={() => document.getElementById("avatar-upload")?.click()} disabled={uploadingAvatar} style={{ width: "100%" }}>
+                    {uploadingAvatar ? "Subiendo" : "Cambiar foto"}
                   </button>
                 </div>
 
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "15px", justifyContent: "center" }}>
-                  
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div style={{ display: "flex", alignItems: "center" }}>
                     <label htmlFor="nickname" style={{ width: "70px", textAlign: "right", marginRight: "10px" }}>
                       Nickname:
@@ -213,20 +211,19 @@ export default function ConfigPage() {
                       type="text" 
                       value={nickname} 
                       onChange={(e) => setNickname(e.target.value)}
-                      style={{ flex: 1, fontFamily: "inherit" }}
+                      style={{ flex: 1, fontFamily: "inherit", boxSizing: "border-box" }}
                     />
                   </div>
                   
-                  <div style={{ display: "flex", alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", flex: 1, marginTop: "10px" }}>
                     <label htmlFor="bio" style={{ width: "70px", textAlign: "right", marginRight: "10px", marginTop: "4px" }}>
                       Bio:
                     </label>
                     <textarea 
                       id="bio" 
-                      rows={3} 
                       value={bio} 
                       onChange={(e) => setBio(e.target.value)}
-                      style={{ flex: 1, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+                      style={{ flex: 1, resize: "none", fontFamily: "inherit", boxSizing: "border-box", height: "100%" }}
                     />
                   </div>
                 </div>
@@ -239,50 +236,62 @@ export default function ConfigPage() {
               </div>
             </fieldset>
 
-            <fieldset style={{ padding: "15px", display: "flex", flexDirection: "column", gap: "15px" }}>
+            <fieldset style={{ padding: "15px" }}>
               <legend>Seguridad y Cuenta</legend>
-              
-              <fieldset style={{ padding: "10px" }}>
-                <legend>Cambiar Dirección de Correo</legend>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Correo Actual:</label>
-                    <input type="email" value={correoActualForm1} onChange={(e) => setCorreoActualForm1(e.target.value)} style={{ flex: 1 }} />
+              <div style={{ display: "flex", gap: "20px", alignItems: "stretch" }}>
+                <fieldset style={{ flex: 1, padding: "15px", display: "flex", flexDirection: "column", margin: 0 }}>
+                  <legend>Cambiar Correo</legend>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+                    <div className="field-row-stacked" style={{ margin: 0 }}>
+                      <label style={{ color: "#464646" }}>Correo Actual:</label>
+                      <input type="email" value={correoActualForm1} onChange={(e) => setCorreoActualForm1(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
+                    </div>
+                    
+                    <div className="field-row-stacked" style={{ margin: 0 }}>
+                      <label style={{ color: "#464646" }}>Contraseña Actual:</label>
+                      <input type="password" value={passActualForm1} onChange={(e) => setPassActualForm1(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
+                    </div>
+                    
+                    <div className="field-row-stacked" style={{ margin: 0, marginTop: "5px" }}>
+                      <label style={{ fontWeight: "bold", color: "#464646" }}>Nuevo Correo:</label>
+                      <input type="email" value={nuevoCorreo} onChange={(e) => setNuevoCorreo(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
+                    </div>
+                    
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "auto", paddingTop: "15px" }}>
+                      <button onClick={handleCambiarEmail} disabled={loading} style={{ width: "145px" }}>
+                        Actualizar Correo
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Contraseña Actual:</label>
-                    <input type="password" value={passActualForm1} onChange={(e) => setPassActualForm1(e.target.value)} style={{ flex: 1 }} />
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
-                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px", fontWeight: "bold" }}>Nuevo Correo:</label>
-                    <input type="email" value={nuevoCorreo} onChange={(e) => setNuevoCorreo(e.target.value)} style={{ flex: 1 }} />
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "5px" }}>
-                    <button onClick={handleCambiarEmail} disabled={loading}>Actualizar Correo</button>
-                  </div>
-                </div>
-              </fieldset>
+                </fieldset>
 
-              <fieldset style={{ padding: "10px" }}>
-                <legend>Cambiar Contraseña</legend>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Correo Actual:</label>
-                    <input type="email" value={correoActualForm2} onChange={(e) => setCorreoActualForm2(e.target.value)} style={{ flex: 1 }} />
+                <fieldset style={{ flex: 1, padding: "15px", display: "flex", flexDirection: "column", margin: 0 }}>
+                  <legend>Cambiar Contraseña</legend>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+                    <div className="field-row-stacked" style={{ margin: 0 }}>
+                      <label style={{ color: "#464646" }}>Correo Actual:</label>
+                      <input type="email" value={correoActualForm2} onChange={(e) => setCorreoActualForm2(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
+                    </div>
+                    
+                    <div className="field-row-stacked" style={{ margin: 0 }}>
+                      <label style={{ color: "#464646" }}>Contraseña Actual:</label>
+                      <input type="password" value={passActualForm2} onChange={(e) => setPassActualForm2(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
+                    </div>
+                    
+                    <div className="field-row-stacked" style={{ margin: 0, marginTop: "5px" }}>
+                      <label style={{ fontWeight: "bold", color: "#464646" }}>Nueva Contraseña:</label>
+                      <input type="password" value={nuevaPass} onChange={(e) => setNuevaPass(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
+                    </div>
+                    
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "auto", paddingTop: "15px" }}>
+                      <button onClick={handleCambiarPassword} disabled={loading} style={{ width: "145px" }}>
+                        Actualizar Contraseña
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px" }}>Contraseña Actual:</label>
-                    <input type="password" value={passActualForm2} onChange={(e) => setPassActualForm2(e.target.value)} style={{ flex: 1 }} />
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
-                    <label style={{ width: "130px", textAlign: "right", marginRight: "10px", fontWeight: "bold" }}>Nueva Contraseña:</label>
-                    <input type="password" value={nuevaPass} onChange={(e) => setNuevaPass(e.target.value)} style={{ flex: 1 }} />
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "5px" }}>
-                    <button onClick={handleCambiarPassword} disabled={loading}>Actualizar Contraseña</button>
-                  </div>
-                </div>
-              </fieldset>
+                </fieldset>
+              </div>
             </fieldset>
           </div>
         </div>
