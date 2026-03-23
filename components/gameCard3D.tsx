@@ -478,7 +478,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
 
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
                 <button onClick={handleGuardarEnBBDD} style={{ fontWeight: "bold", padding: "6px 20px", cursor: "pointer" }}>
-                  Loguear en BBDD
+                  Loguear
                 </button>
               </div>
 

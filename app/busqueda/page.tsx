@@ -28,6 +28,9 @@ export default function BusquedaPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
 
+  const [notificacion, setNotificacion] = useState<{ titulo: string, mensaje: string } | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+
   useEffect(() => {
     const comprobarSesion = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -112,11 +115,6 @@ export default function BusquedaPage() {
     };
   }, [hasMore, cargando]);
 
-  const handleBoxClick = (juego: any) => {
-    setFocusedGame(juego);
-    setConsolaFocus(juego.consola);
-  };
-
   useEffect(() => {
     if (focusedGame) {
       document.body.style.overflow = "hidden";
@@ -125,6 +123,19 @@ export default function BusquedaPage() {
     }
     return () => { document.body.style.overflow = "auto"; };
   }, [focusedGame]);
+
+  const handleBoxClick = (juego: any) => {
+    setFocusedGame(juego);
+    setConsolaFocus(juego.consola);
+  };
+
+  const cerrarNotificacion = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setNotificacion(null);
+      setIsClosing(false);
+    }, 500);
+  };
 
   return (
     <main ref={mainRef} style={{ padding: "100px 20px 40px", minHeight: "100vh", position: "relative" }}>
@@ -179,7 +190,16 @@ export default function BusquedaPage() {
               isLogging={isLogging}
               juego={focusedGame} 
               userId={userId}
-              onSaveSuccess={() => {setIsLogging(false); setFocusedGame(null);}} 
+              onSaveSuccess={() => {
+                setIsLogging(false); 
+                setFocusedGame(null);
+                setIsClosing(false); 
+                setNotificacion({
+                  titulo: "¡Juego Guardado!",
+                  mensaje: `Has añadido ${focusedGame.titulo} a tu colección con éxito.`
+                });
+                setTimeout(() => cerrarNotificacion(), 3000);
+              }} 
             />
           </div>
 
@@ -262,7 +282,35 @@ export default function BusquedaPage() {
       >
         <View.Port />
       </Canvas>
+      {notificacion && (
+        <div 
+          style={{ 
+            position: "fixed", top: "80px", left: "20px", 
+            zIndex: 9999, opacity: isClosing ? 0 : 1, transition: "opacity 0.5s ease-in-out", 
+          }}
+        >
+          <div role="tooltip" style={{ position: "relative", width: "660px", maxWidth: "90vw" }}>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+              <span style={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: "5px", color: "#000" }}>
+                {notificacion.titulo}
+              </span>
+              
+              <button 
+                onClick={() => setNotificacion(null)}
+                style={{ minWidth: "20px", height: "20px", padding: 0, display: "flex", justifyContent: "center", alignItems: "center" }}
+              >
+                <X size={14} strokeWidth={3} />
+              </button>
+            </div>
 
+            <p style={{ margin: 0, fontSize: "12px", color: "#333", lineHeight: "1.4" }}>
+              {notificacion.mensaje}
+            </p>
+
+          </div>
+        </div>
+      )}
     </main>
   );
 }

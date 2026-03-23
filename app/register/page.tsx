@@ -66,7 +66,7 @@ export default function RegisterPage() {
             <div className="title-bar-controls">
               <button aria-label="Minimize"></button>
               <button aria-label="Maximize"></button>
-              <button aria-label="Close"></button>
+              <button aria-label="Close" onClick={() => router.push("/")}></button>
             </div>
           </div>
 
