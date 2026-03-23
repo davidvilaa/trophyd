@@ -243,17 +243,17 @@ export default function ConfigPage() {
                   <legend>Cambiar Correo</legend>
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
                     <div className="field-row-stacked" style={{ margin: 0 }}>
-                      <label style={{ color: "#464646" }}>Correo Actual:</label>
+                      <label style={{ color: "#000000" }}>Correo Actual:</label>
                       <input type="email" value={correoActualForm1} onChange={(e) => setCorreoActualForm1(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
                     </div>
                     
                     <div className="field-row-stacked" style={{ margin: 0 }}>
-                      <label style={{ color: "#464646" }}>Contraseña Actual:</label>
+                      <label style={{ color: "#000000" }}>Contraseña Actual:</label>
                       <input type="password" value={passActualForm1} onChange={(e) => setPassActualForm1(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
                     </div>
                     
                     <div className="field-row-stacked" style={{ margin: 0, marginTop: "5px" }}>
-                      <label style={{ fontWeight: "bold", color: "#464646" }}>Nuevo Correo:</label>
+                      <label style={{ fontWeight: "bold", color: "#000000" }}>Nuevo Correo:</label>
                       <input type="email" value={nuevoCorreo} onChange={(e) => setNuevoCorreo(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
                     </div>
                     
@@ -270,17 +270,17 @@ export default function ConfigPage() {
                   
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
                     <div className="field-row-stacked" style={{ margin: 0 }}>
-                      <label style={{ color: "#464646" }}>Correo Actual:</label>
+                      <label style={{ color: "#000000" }}>Correo Actual:</label>
                       <input type="email" value={correoActualForm2} onChange={(e) => setCorreoActualForm2(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
                     </div>
                     
                     <div className="field-row-stacked" style={{ margin: 0 }}>
-                      <label style={{ color: "#464646" }}>Contraseña Actual:</label>
+                      <label style={{ color: "#000000" }}>Contraseña Actual:</label>
                       <input type="password" value={passActualForm2} onChange={(e) => setPassActualForm2(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
                     </div>
                     
                     <div className="field-row-stacked" style={{ margin: 0, marginTop: "5px" }}>
-                      <label style={{ fontWeight: "bold", color: "#464646" }}>Nueva Contraseña:</label>
+                      <label style={{ fontWeight: "bold", color: "#000000" }}>Nueva Contraseña:</label>
                       <input type="password" value={nuevaPass} onChange={(e) => setNuevaPass(e.target.value)} style={{ width: "100%", boxSizing: "border-box" }} />
                     </div>
                     
