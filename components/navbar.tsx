@@ -13,7 +13,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false); 
   const [username, setUsername] = useState<string | null>(null);
 
-useEffect(() => {
+  useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -58,8 +58,6 @@ useEffect(() => {
       router.push(`/busqueda?q=${encodeURIComponent(textoBusqueda)}`);
     }
   };
-
-  const displayName = username;
 
   return (
     <nav style={{
@@ -127,7 +125,7 @@ useEffect(() => {
                 >
                   <User size={16} color="#0044aa" />
                   <strong style={{ fontSize: "14px", color: "#000", textShadow: "0 0 3px rgba(255,255,255,0.8)" }}>
-                    {displayName}
+                    {username}
                   </strong>
                   <ChevronDown size={14} style={{ color: "#000" }} />
                 </button>
@@ -152,7 +150,7 @@ useEffect(() => {
                     zIndex: 100
                   }}>
                     
-                    <Link href="/profile" onClick={() => setIsMenuOpen(false)}>
+                    <Link href={`/profile/${username}`} onClick={() => setIsMenuOpen(false)}>
                       <button type="button" style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: "8px" }}>
                         <User size={14} /> Perfil
                       </button>
