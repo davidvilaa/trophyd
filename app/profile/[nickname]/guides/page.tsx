@@ -43,10 +43,9 @@ export default function ProfileGuidesPage() {
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando guías...</div>;
 
   return (
-    <fieldset style={{ padding: "20px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "20px" }}>
+    <fieldset style={{ padding: "20px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "0px" }}>
       <legend style={{ fontSize: "18px" }}>Published Guides</legend>
-      <div style={{ display: "flex", alignItems: "center", paddingBottom: "10px", borderBottom: "1px solid #ccc" }}>
-        <div style={{ fontWeight: "bold", color: "#666" }}>Total Guides: {guides.length}</div>
+      <div style={{ display: "flex", alignItems: "center", paddingBottom: "10px", borderBottom: "0px solid #ccc" }}>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
         {guides.length > 0 ? (

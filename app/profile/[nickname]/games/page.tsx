@@ -77,9 +77,6 @@ export default function ProfileGamesPage() {
             <option value="time_desc">Most Played Time</option>
           </select>
         </div>
-        <div style={{ marginLeft: "auto", fontWeight: "bold", color: "#666" }}>
-          Total: {processedGames.length}
-        </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px" }}>
         {processedGames.length > 0 ? (
