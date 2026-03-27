@@ -10,7 +10,6 @@ export default function ConfigPage() {
   const nodeRef = useRef(null);
 
   const [userId, setUserId] = useState<string | null>(null);
-  
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [pfpUrl, setPfpUrl] = useState("");
@@ -98,7 +97,11 @@ export default function ConfigPage() {
         .eq("id", userId);
 
       if (error) throw error;
-      setMensaje({ tipo: "exito", texto: "¡Perfil guardado correctamente!" });
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
     } catch (error) {
       setMensaje({ tipo: "error", texto: "Error al guardar el perfil" });
     } finally {
