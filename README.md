@@ -8,7 +8,7 @@
 
 ---
 
-This repository contains the source code and development environment for **TrophyD**. Developed as a Final Degree Project (TFG) in Computer Engineering at UPV, this web platform validates the technical feasibility of creating a modern, gamified social ecosystem for the completionist gaming community.
+This repository contains the source code and development environment for **TrophyD**. Developed as a Final Degree Project (TFG) in Software Engineering at UPV, this web platform validates the technical feasibility of creating a modern, gamified social ecosystem for the completionist gaming community.
 
 ## What is TrophyD?
 
@@ -85,5 +85,5 @@ npm run dev
 
 ---
 <p align="center">
-  Developed as part of the Computer Engineering TFG. <br> UPV (Valencia, Spain)
+  Developed as part of the Software Engineering TFG. <br> UPV (Valencia, Spain)
 </p>
