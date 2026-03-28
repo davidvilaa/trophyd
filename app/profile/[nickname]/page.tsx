@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function ProfileContentPage() {
   const router = useRouter();
+  const params = useParams();
+  const targetNickname = params.nickname as string;
+
   const [loading, setLoading] = useState(true);
   const [notaMedia, setNotaMedia] = useState(0);
   const [distribucionNotas, setDistribucionNotas] = useState<Record<number, number>>({
@@ -24,12 +27,23 @@ export default function ProfileContentPage() {
           return;
         }
 
-        const userId = session.user.id;
+        const { data: targetProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("nickname", targetNickname)
+          .single();
+
+        if (!targetProfile) {
+          setLoading(false);
+          return;
+        }
+
+        const targetUserId = targetProfile.id; // ¡Este es el ID correcto!
 
         const { data: ratingsData } = await supabase
           .from("user_games")
           .select("rating")
-          .eq("user_id", userId)
+          .eq("user_id", targetUserId)
           .not("rating", "is", null);
 
         if (ratingsData && ratingsData.length > 0) {
@@ -49,6 +63,10 @@ export default function ProfileContentPage() {
           setNotaMedia(Number((suma / ratingsData.length).toFixed(1)));
           setDistribucionNotas(counts);
           setMaxNotaCount(Math.max(...Object.values(counts), 1));
+        } else {
+          setNotaMedia(0);
+          setDistribucionNotas({ 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 });
+          setMaxNotaCount(1);
         }
 
         const { data: favsData } = await supabase
@@ -60,12 +78,14 @@ export default function ProfileContentPage() {
               cover_image_url
             )
           `)
-          .eq("user_id", userId)
+          .eq("user_id", targetUserId)
           .eq("isFavorite", true)
           .limit(5);
 
         if (favsData) {
           setFavoritos(favsData);
+        } else {
+          setFavoritos([]);
         }
       } catch (error) {
         console.error(error);
@@ -74,8 +94,10 @@ export default function ProfileContentPage() {
       }
     };
 
-    cargarDatosPerfil();
-  }, [router]);
+    if (targetNickname) {
+      cargarDatosPerfil();
+    }
+  }, [router, targetNickname]);
 
   const favoritosMostrados = Array(5).fill(null).map((_, index) => favoritos[index] || null);
 
@@ -89,7 +111,7 @@ export default function ProfileContentPage() {
     <div style={{ display: "flex", gap: "30px", alignItems: "stretch" }}>
       <fieldset style={{ width: "280px", padding: "20px", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
         <legend style={{ fontSize: "18px" }}>Ratings</legend>
-        
+
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "auto" }}>
           <div style={{ 
             display: "flex", alignItems: "flex-end", justifyContent: "space-between", 
@@ -127,7 +149,7 @@ export default function ProfileContentPage() {
             <div key={index} className={fav ? "game-card" : ""} style={{ 
               aspectRatio: "3/4", backgroundColor: "#e5e7eb", border: "2px inset #fff",
               display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: "2rem",
-              backgroundImage: fav ? `url(${fav.games.cover_image_url})` : "none",
+              backgroundImage: fav ? `url(${fav.games?.cover_image_url})` : "none",
               backgroundSize: "cover", backgroundPosition: "center"
             }}>
               {!fav && <span style={{ fontSize: "1.5rem" }}>--</span>}
