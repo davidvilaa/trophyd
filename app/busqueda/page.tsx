@@ -6,11 +6,13 @@ import { supabase } from "@/lib/supabase";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
-import {MoveLeft, MoveRight, X} from "lucide-react";
+import { MoveLeft, MoveRight, X } from "lucide-react";
 
 export default function BusquedaPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q");
+
+  const [activeTab, setActiveTab] = useState("games");
 
   const [focusedGame, setFocusedGame] = useState<any | null>(null);
   const [consolaFocus, setConsolaFocus] = useState<string | null>(null);
@@ -18,9 +20,11 @@ export default function BusquedaPage() {
   
   const [juegos, setJuegos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
-  
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
 
   const mainRef = useRef<HTMLElement>(null!);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -36,7 +40,6 @@ export default function BusquedaPage() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.warn("Usuario no autenticado, redirigiendo a home...");
         router.push("/");
       } else {
         setUserId(session.user.id);
@@ -61,17 +64,36 @@ export default function BusquedaPage() {
           setHasMore(datos.length > 0); 
         }
       } catch (error) {
-        console.error("Error en búsqueda inicial:", error);
+        console.error(error);
       } finally {
         setCargando(false);
       }
     };
 
+    const buscarUsuarios = async () => {
+      setCargandoUsuarios(true);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("id, nickname, pfp_url")
+          .ilike("nickname", `%${query}%`);
+        
+        if (data) {
+          setUsuarios(data);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setCargandoUsuarios(false);
+      }
+    };
+
     buscarInicial();
+    buscarUsuarios();
   }, [query]);
 
   useEffect(() => {
-    if (offset === 0 || !query || !hasMore) return;
+    if (offset === 0 || !query || !hasMore || activeTab !== "games") return;
 
     const buscarMas = async () => {
       setCargando(true);
@@ -87,19 +109,19 @@ export default function BusquedaPage() {
           }
         }
       } catch (error) {
-        console.error("Error cargando más juegos:", error);
+        console.error(error);
       } finally {
         setCargando(false);
       }
     };
 
     buscarMas();
-  }, [offset, query, hasMore]);
+  }, [offset, query, hasMore, activeTab]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !cargando) {
+        if (entries[0].isIntersecting && hasMore && !cargando && activeTab === "games") {
           setOffset((prevOffset) => prevOffset + 20);
         }
       },
@@ -113,7 +135,7 @@ export default function BusquedaPage() {
     return () => {
       if (observerTarget.current) observer.unobserve(observerTarget.current);
     };
-  }, [hasMore, cargando]);
+  }, [hasMore, cargando, activeTab]);
 
   useEffect(() => {
     if (focusedGame) {
@@ -140,32 +162,99 @@ export default function BusquedaPage() {
   return (
     <main ref={mainRef} style={{ padding: "100px 20px 40px", minHeight: "100vh", position: "relative" }}>
 
-      <div style={{
-        maxWidth: "1100px", margin: "0 auto", display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", 
-        gap: "30px 15px", justifyItems: "center"
-      }}>
-        {juegos.map((juego, index) => {
-          if (!juego) return null; 
+      <div style={{ maxWidth: "1100px", margin: "0 auto", marginBottom: "30px", position: "relative", zIndex: 9999 }}>
+        <style>{`
+          .tab-activa {
+            background-color: rgba(51, 153, 255, 0.2);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+          }
+          .user-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+          }
+          .user-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+          }
+        `}</style>
+        
+        <ul role="menubar" style={{ fontSize: "16px", backgroundColor: "#fff", position: "relative" }}>
+          <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("games")} className={activeTab === "games" ? "tab-activa" : ""}>
+            Juegos ({juegos.length}{hasMore && juegos.length > 0 ? "+" : ""})
+          </li>
+          <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("users")} className={activeTab === "users" ? "tab-activa" : ""}>
+            Usuarios ({usuarios.length})
+          </li>
+        </ul>
+      </div>
 
-          return (
-            <div key={`${juego.id}-${index}`} style={{ 
-              width: "100%", height: "280px", display: "flex",
-              justifyContent: "center", alignItems: "center", position: "relative"
-            }}>
-              <GameCard3D 
-                coverUrl={juego.portada} 
-                consola={juego.consola}
-                onClick={() => handleBoxClick(juego)}
-              />
+      {activeTab === "games" && (
+        <>
+          <div style={{
+            maxWidth: "1100px", margin: "0 auto", display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", 
+            gap: "30px 15px", justifyItems: "center"
+          }}>
+            {juegos.map((juego, index) => {
+              if (!juego) return null; 
+
+              return (
+                <div key={`${juego.id}-${index}`} style={{ 
+                  width: "100%", height: "280px", display: "flex",
+                  justifyContent: "center", alignItems: "center", position: "relative"
+                }}>
+                  <GameCard3D 
+                    coverUrl={juego.portada} 
+                    consola={juego.consola}
+                    onClick={() => handleBoxClick(juego)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div ref={observerTarget} style={{ height: "20px", width: "100%", marginTop: "20px" }}>
+            {cargando && <p style={{ textAlign: "center", color: "white", fontWeight: "bold" }}>Cargando más juegos...</p>}
+          </div>
+        </>
+      )}
+
+      {activeTab === "users" && (
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          {cargandoUsuarios ? (
+            <p style={{ textAlign: "center", color: "white", fontWeight: "bold" }}>Buscando usuarios...</p>
+          ) : usuarios.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" }}>
+              {usuarios.map(user => (
+                <div 
+                  key={user.id} 
+                  className="window user-card" 
+                  onClick={() => router.push(`/profile/${user.nickname}`)} 
+                  style={{ padding: "10px", margin: 0 }}
+                >
+                  <div className="window-body" style={{ display: "flex", alignItems: "center", gap: "15px", margin: 0 }}>
+                    <div style={{ 
+                      width: "50px", height: "50px", flexShrink: 0,
+                      border: "2px inset #fff", backgroundColor: "#ccc",
+                      backgroundImage: `url(${user.pfp_url || 'https://www.gravatar.com/avatar/0?d=mp&f=y'})`, 
+                      backgroundSize: "cover", backgroundPosition: "center"
+                    }}></div>
+                    <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                      <span style={{ fontWeight: "bold", fontSize: "16px", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                        {user.nickname}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          );
-        })}
-      </div>
-
-      <div ref={observerTarget} style={{ height: "20px", width: "100%", marginTop: "20px" }}>
-        {cargando && <p style={{ textAlign: "center", color: "white" }}>Cargando más juegos...</p>}
-      </div>
+          ) : (
+            <p style={{ textAlign: "center", color: "white", fontWeight: "bold" }}>
+              No se encontraron usuarios con "{query}".
+            </p>
+          )}
+        </div>
+      )}
 
       {focusedGame && (
         <div style={{
