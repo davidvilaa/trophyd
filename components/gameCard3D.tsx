@@ -536,7 +536,10 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
           />
         </Suspense>
       </Float>
-      <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={10} blur={2.5} />
+      
+      {!isFocused && (
+        <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={10} blur={2.5} />
+      )}
     </>
   );
 
