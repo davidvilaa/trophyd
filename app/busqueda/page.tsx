@@ -260,18 +260,14 @@ export default function BusquedaPage() {
         <div style={{
           position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
           backgroundColor: "rgba(0, 0, 0, 0.4)", backdropFilter: "blur(5px)",
-          zIndex: 100, display: "flex", flexDirection: "column",
-          justifyContent: "center", alignItems: "center"
+          zIndex: 100000, 
+          display: "flex", flexDirection: "column",
+          justifyContent: "flex-end", 
+          alignItems: "center",
+          paddingBottom: "30px" 
         }}>
-          <div style={{ 
-            width: "100vw", 
-            flex: 1,
-            maxHeight: "80vh",
-            display: "flex", 
-            justifyContent: "center", 
-            alignItems: "center",
-            marginTop: "0px"
-          }}>
+          
+          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 105 }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
               consola={consolaFocus}
@@ -292,7 +288,7 @@ export default function BusquedaPage() {
             />
           </div>
 
-          <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px", margin: "5px"}}>
+          <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px", position: "relative" }}>
             <div className="window-body" style={{ display: "flex", gap: "15px", alignItems: "center", margin: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <button 

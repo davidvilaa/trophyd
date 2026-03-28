@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Float, ContactShadows, Environment, useTexture, Center, View, Html } from "@react-three/drei";
+import { useGLTF, Float, ContactShadows, Environment, Center, View, Html } from "@react-three/drei";
 import { supabase } from "@/lib/supabase";
 import * as THREE from "three";
 
@@ -62,7 +62,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId, onSaveSuccess }: { url: string, coverUrl: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void }) {
+function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId, onSaveSuccess }: { url: string, coverUrl?: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -114,16 +114,18 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   useEffect(() => {
     const loader = new THREE.TextureLoader();
     
-    loader.load(
-      coverUrl, 
-      (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.flipY = false;
-        setTexture(tex);
-      }, 
-      undefined, 
-      (err) => console.warn("Fallo al cargar foto de IGDB", coverUrl)
-    );
+    if (coverUrl) {
+      loader.load(
+        coverUrl, 
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.flipY = false;
+          setTexture(tex);
+        }, 
+        undefined, 
+        (err) => console.warn("Fallo al cargar foto de IGDB", coverUrl)
+      );
+    }
 
     loader.load(
       templatePath, 
@@ -149,7 +151,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
       undefined,
       (err) => console.warn("Contraportada no encontrada:", contraPath)
     );
-  }, [coverUrl, templatePath]);
+  }, [coverUrl, templatePath, lomoPath, contraPath]);
 
   useEffect(() => {
     if (texture) {
@@ -224,19 +226,21 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
     if (!meshRef.current) return;
     let targetX = 0.05; 
     let targetY = -0.3;  
-    let targetScale = isFocused ? 1.5 : 1;
+    
+    let targetScale = isFocused ? 1.3 : 1; 
     let offsetY = 0;
 
     if (isLogging) {
       targetY = Math.PI; 
       targetX = 0; 
-      targetScale = 5;
-      offsetY = -7.1;
+      
+      targetScale = 3.5; 
+      offsetY = -4.8;
     } 
     else if (hovered) {
       targetY = state.pointer.x * 0.6; 
       targetX = 0.05 + (-state.pointer.y * 0.4);
-      targetScale = isFocused ? 1.5 : 1.15;
+      targetScale = isFocused ? 1.3 : 1.15;
     }
 
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetY, 0.04);
@@ -259,7 +263,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
         .upsert({
           id: juego.id,
           title: juego.titulo,
-          cover_image_url: juego.portada
+          cover_image_url: juego.portada || null
         }, { onConflict: 'id' });
 
       if (errorGame) {
@@ -490,8 +494,26 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId, onSaveSuccess }: { coverUrl: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void   }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId, onSaveSuccess }: { coverUrl?: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void   }) {
   const [hovered, setHovered] = useState(false);
+
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isFocused) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, { rootMargin: "200px" });
+
+    if (containerRef.current) observer.observe(containerRef.current);
+    
+    return () => observer.disconnect();
+  }, [isFocused]);
 
   const escena3D = (
     <>
@@ -530,6 +552,7 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
 
   return (
     <div 
+      ref={containerRef}
       style={{ 
         width: "100%", height: "100%", position: "relative",
         cursor: hovered ? "pointer" : "default", zIndex: hovered ? 50 : 1 
@@ -538,9 +561,15 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
       onPointerOut={() => setHovered(false)}
       onClick={onClick}
     >
-      <View style={{ position: "absolute", top: "-25%", left: "-25%", width: "150%", height: "150%" }}>
-        {escena3D}
-      </View>
+      {isVisible ? (
+        <View style={{ position: "absolute", top: "-25%", left: "-25%", width: "150%", height: "150%" }}>
+          {escena3D}
+        </View>
+      ) : (
+        <div style={{ width: "100%", height: "100%", backgroundColor: "#e5e7eb", backgroundImage: coverUrl ? `url(${coverUrl})` : "none", backgroundSize: "cover", backgroundPosition: "center", border: "2px inset #fff", borderRadius: "3px", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af" }}>
+          {!coverUrl && <span style={{ fontSize: "1.5rem" }}>🖼️</span>}
+        </div>
+      )}
     </div>
   );
 }
