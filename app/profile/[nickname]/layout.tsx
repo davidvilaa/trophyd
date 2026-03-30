@@ -88,9 +88,15 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         </div>
 
         <style>{`
-          .tab-activa {
-            background-color: rgba(51, 153, 255, 0.2);
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+          .tab-activa,
+          [role="menubar"] [role="menuitem"]:hover,
+          [role="menubar"] [role="menuitem"]:focus,
+          [role="menubar"] [role="menuitem"]:active {
+            background: linear-gradient(to bottom, rgba(175, 205, 245, 0.4) 0%, rgba(135, 175, 225, 0.4) 100%) !important;
+            color: #000 !important;
+            border-radius: 3px;
+            box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            outline: none !important;
           }
         `}</style>
 
