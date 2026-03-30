@@ -1,16 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function ProfileGamesPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const targetNickname = params.nickname as string;
 
   const [loading, setLoading] = useState(true);
   const [allGames, setAllGames] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState("all");
+  
+  const ratingFromUrl = searchParams.get("rating");
+  const [filterRating, setFilterRating] = useState(ratingFromUrl || "all");
+  
   const [sortBy, setSortBy] = useState("title_asc");
 
   useEffect(() => {
@@ -43,6 +48,7 @@ export default function ProfileGamesPage() {
 
   const processedGames = allGames
     .filter((g) => filterStatus === "all" || g.status === filterStatus)
+    .filter((g) => filterRating === "all" || Number(g.rating) === Number(filterRating))
     .sort((a, b) => {
       if (sortBy === "title_asc") return a.games.title.localeCompare(b.games.title);
       if (sortBy === "title_desc") return b.games.title.localeCompare(a.games.title);
@@ -51,12 +57,14 @@ export default function ProfileGamesPage() {
       return 0;
     });
 
+  const escalas = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5];
+
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando colección...</div>;
 
   return (
     <fieldset style={{ padding: "20px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "20px" }}>
       <legend style={{ fontSize: "18px" }}>Game Collection</legend>
-      <div style={{ display: "flex", gap: "15px", alignItems: "center", paddingBottom: "15px", borderBottom: "1px solid #ccc" }}>
+      <div style={{ display: "flex", gap: "15px", alignItems: "center", paddingBottom: "15px", borderBottom: "1px solid #ccc", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <label htmlFor="filterStatus">Status:</label>
           <select id="filterStatus" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -68,6 +76,17 @@ export default function ProfileGamesPage() {
             <option value="wishlist">Wishlist</option>
           </select>
         </div>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <label htmlFor="filterRating">Rating:</label>
+          <select id="filterRating" value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
+            <option value="all">All Ratings</option>
+            {escalas.map(nota => (
+              <option key={nota} value={nota}>{nota} Stars</option>
+            ))}
+          </select>
+        </div>
+
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <label htmlFor="sortBy">Sort By:</label>
           <select id="sortBy" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
@@ -78,6 +97,7 @@ export default function ProfileGamesPage() {
           </select>
         </div>
       </div>
+      
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px" }}>
         {processedGames.length > 0 ? (
           processedGames.map((juego) => (

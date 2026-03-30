@@ -38,7 +38,7 @@ export default function ProfileContentPage() {
           return;
         }
 
-        const targetUserId = targetProfile.id; // ¡Este es el ID correcto!
+        const targetUserId = targetProfile.id; 
 
         const { data: ratingsData } = await supabase
           .from("user_games")
@@ -48,7 +48,7 @@ export default function ProfileContentPage() {
 
         if (ratingsData && ratingsData.length > 0) {
           let suma = 0;
-          let counts: Record<number, number> = { 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 };
+          let counts: Record<number, number> = { 0.5: 0, 1: 0, 1.5: 0, 2: 2, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 };
 
           ratingsData.forEach((row) => {
             const nota = Number(row.rating);
@@ -109,6 +109,28 @@ export default function ProfileContentPage() {
 
   return (
     <div style={{ display: "flex", gap: "30px", alignItems: "stretch" }}>
+      <style>{`
+        .rating-bar {
+          background-color: #b9d5fa;
+          /* Mantenemos height, añadimos transform y shadow con la curva cubic-bezier premium */
+          transition: height 0.5s ease-out, background-color 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+          cursor: pointer;
+          position: relative;
+          /* CLAVE: La barra crece hacia ARRIBA desde la base */
+          transform-origin: bottom; 
+        }
+        
+        .rating-bar:hover {
+          background-color: #7baaf7;
+          /* Pop-out: Crece un 15% a lo ancho y un 10% a lo alto */
+          transform: scaleX(1.15) scaleY(1.1); 
+          /* Sombra suave para dar relieve */
+          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+          /* Se pone por encima de las barras vecinas */
+          z-index: 10; 
+        }
+      `}</style>
+      
       <fieldset style={{ width: "280px", padding: "20px", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
         <legend style={{ fontSize: "18px" }}>Ratings</legend>
 
@@ -122,11 +144,15 @@ export default function ProfileContentPage() {
               return (
                 <div 
                   key={estrella}
+                  className="rating-bar"
+                  onClick={() => {
+                    if (distribucionNotas[estrella] > 0) {
+                      router.push(`/profile/${targetNickname}/games?rating=${estrella}`);
+                    }
+                  }}
                   style={{ 
                     flex: 1, 
-                    height: `${Math.max(heightPercent, 2)}%`,
-                    backgroundColor: "#b9d5fa",
-                    transition: "height 0.5s ease-out"
+                    height: `${Math.max(heightPercent, 2)}%`
                   }} 
                   title={`${estrella} Estrellas: ${distribucionNotas[estrella]} juegos`}
                 ></div>
