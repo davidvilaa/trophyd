@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Eraser } from "lucide-react";
+import { Eraser, Clock, Dumbbell, Award } from "lucide-react";
 
 export default function ProfileGamesPage() {
   const params = useParams();
@@ -104,14 +104,81 @@ export default function ProfileGamesPage() {
           padding: 0;
           transition: all 0.2s ease;
           opacity: 0.4;
+          color: #d9534f;
+          width: fit-content;
         }
         .reset-btn-narrow.active {
           cursor: pointer;
           opacity: 1;
         }
-        .reset-btn-narrow:focus-visible {
-          outline: 1px dotted #000 !important;
-          outline-offset: -3px !important;
+        
+        .game-case-container {
+          position: relative;
+          cursor: pointer;
+          perspective: 1000px;
+          aspect-ratio: 3/4;
+          z-index: 1;
+        }
+
+        .game-case {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          background-size: cover;
+          background-position: center;
+          border: 2px inset #fff;
+          background-color: #e5e7eb;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          transform-style: preserve-3d;
+          transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+        }
+
+        .game-case-container:hover {
+          z-index: 20;
+        }
+
+        .game-case-container:hover .game-case {
+          transform: rotateX(8deg) rotateY(-8deg) scale(1.15) translateZ(30px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+        }
+
+        .badges-area {
+          position: absolute;
+          bottom: 12px;
+          left: 50%;
+          transform: translateX(-50%) translateZ(50px);
+          width: max-content;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          gap: 5px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          transform-style: preserve-3d;
+        }
+
+        .game-case-container:hover .badges-area {
+          opacity: 1;
+        }
+
+        .embedded-badge {
+          background-color: rgba(0, 0, 0, 0.7);
+          color: #fff;
+          padding: 3px 6px;
+          border-radius: 4px;
+          font-size: 10px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.4);
+          text-transform: capitalize;
+          white-space: nowrap;
+        }
+
+        .embedded-badge svg {
+          stroke-width: 2.5px;
+          color: #e3e3e3;
         }
       `}</style>
 
@@ -162,15 +229,29 @@ export default function ProfileGamesPage() {
         </div>
       </div>
       
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1px" }}>
         {processedGames.length > 0 ? (
           processedGames.map((juego) => (
-            <div key={juego.game_id} className="game-card" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-              <div style={{ aspectRatio: "3/4", backgroundColor: "#e5e7eb", border: "2px inset #fff", backgroundImage: `url(${juego.games.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
-                {juego.rating && <div style={{ position: "absolute", bottom: "5px", right: "5px", backgroundColor: "rgba(0,0,0,0.8)", color: "#fbbf24", padding: "2px 6px", borderRadius: "4px", fontSize: "12px", fontWeight: "bold" }}>★ {juego.rating}</div>}
+            <div key={juego.game_id} className="game-case-container" title={juego.games.title}>
+              <div 
+                className="game-case" 
+                style={{ backgroundImage: `url(${juego.games.cover_image_url})` }}
+              >
+                <div className="badges-area">
+                  <div className="embedded-badge" title="Time Played">
+                    <Clock size={14} />
+                    {juego.time_played ? `${juego.time_played}h` : "--h"}
+                  </div>
+                  <div className="embedded-badge" title="Difficulty">
+                    <Dumbbell size={14} />
+                    {juego.difficulty || "Default"}
+                  </div>
+                  <div className="embedded-badge" title="Rating">
+                    <Award size={14} />
+                    {juego.rating ? `★ ${juego.rating}` : "★ --"}
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: "13px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={juego.games.title}>{juego.games.title}</div>
-              <div style={{ fontSize: "11px", color: "#666", textTransform: "capitalize" }}>{juego.status}</div>
             </div>
           ))
         ) : (
