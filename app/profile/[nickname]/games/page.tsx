@@ -19,7 +19,7 @@ export default function ProfileGamesPage() {
   const ratingFromUrl = searchParams.get("rating");
   const [filterRating, setFilterRating] = useState(ratingFromUrl || "all");
   
-  const [sortBy, setSortBy] = useState("title_asc");
+  const [sortBy, setSortBy] = useState("added_desc");
 
   useEffect(() => {
     const cargarJuegos = async () => {
@@ -50,18 +50,22 @@ export default function ProfileGamesPage() {
   }, [targetNickname]);
 
   const clearFilters = () => {
-    setFilterStatus("completed");
     setFilterRating("all");
-    setSortBy("title_asc");
+    setSortBy("added_desc");
     router.replace(`/profile/${targetNickname}/games`, { scroll: false });
   };
 
-  const hasActiveFilters = filterStatus !== "completed" || filterRating !== "all" || sortBy !== "title_asc";
+  const hasActiveFilters = filterRating !== "all" || sortBy !== "added_desc";
 
   const processedGames = allGames
     .filter((g) => g.status === filterStatus)
     .filter((g) => filterRating === "all" || Number(g.rating) === Number(filterRating))
     .sort((a, b) => {
+      if (sortBy === "added_desc") {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return timeB - timeA;
+      }
       if (sortBy === "title_asc") return a.games.title.localeCompare(b.games.title);
       if (sortBy === "title_desc") return b.games.title.localeCompare(a.games.title);
       if (sortBy === "rating_desc") return (b.rating || 0) - (a.rating || 0);
@@ -69,7 +73,7 @@ export default function ProfileGamesPage() {
       return 0;
     });
 
-  const escalas = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5];
+  const escalas = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
   const statuses = ["completed", "playing", "paused", "dropped", "wishlist"];
 
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando colección...</div>;
@@ -93,22 +97,17 @@ export default function ProfileGamesPage() {
         .reset-btn-narrow {
           background: none;
           border: none;
-          color: #d9534f;
           cursor: default;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 0;
-          width: fit-content;
           transition: all 0.2s ease;
           opacity: 0.4;
         }
         .reset-btn-narrow.active {
           cursor: pointer;
           opacity: 1;
-        }
-        .reset-btn-narrow.active:hover {
-          color: #a94442;
         }
         .reset-btn-narrow:focus-visible {
           outline: 1px dotted #000 !important;
@@ -144,6 +143,7 @@ export default function ProfileGamesPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <label htmlFor="sortBy">Sort By:</label>
             <select id="sortBy" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="added_desc">When Added</option>
               <option value="title_asc">Title (A-Z)</option>
               <option value="title_desc">Title (Z-A)</option>
               <option value="rating_desc">Highest Rated</option>
