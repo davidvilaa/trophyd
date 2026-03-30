@@ -16,10 +16,21 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const [userProfile, setUserProfile] = useState({ id: "", nickname: "", bio: "", pfp: "" });
   const [perfilNoEncontrado, setPerfilNoEncontrado] = useState(false);
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+
   useEffect(() => {
     const cargarPerfil = async () => {
       setLoading(true);
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        let loggedUserId = null;
+        if (session) {
+          loggedUserId = session.user.id;
+          setCurrentUserId(loggedUserId);
+        }
+
         const { data: profileData, error } = await supabase
           .from("profiles")
           .select("id, nickname, bio, pfp_url")
@@ -38,6 +49,17 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           pfp: profileData.pfp_url || "https://www.gravatar.com/avatar/0?d=mp&f=y"
         });
 
+        if (loggedUserId && loggedUserId !== profileData.id) {
+          const { data: followData } = await supabase
+            .from("follows")
+            .select("follower_id")
+            .eq("follower_id", loggedUserId)
+            .eq("following_id", profileData.id)
+            .maybeSingle();
+
+          setIsFollowing(!!followData);
+        }
+
       } catch (error) {
         console.error(error);
       } finally {
@@ -49,6 +71,38 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
       cargarPerfil();
     }
   }, [targetNickname]);
+
+  const toggleFollow = async () => {
+    if (!currentUserId || !userProfile.id || isToggling) return;
+    
+    setIsToggling(true);
+    try {
+      if (isFollowing) {
+        const { error } = await supabase
+          .from("follows")
+          .delete()
+          .eq("follower_id", currentUserId)
+          .eq("following_id", userProfile.id);
+          
+        if (error) throw error;
+        
+        setIsFollowing(false);
+      } else {
+        const { error } = await supabase
+          .from("follows")
+          .insert({ follower_id: currentUserId, following_id: userProfile.id });
+          
+        if (error) throw error;
+        
+        setIsFollowing(true);
+      }
+    } catch (error: any) {
+      console.error("Error al hacer toggle follow:", error);
+      alert("¡Supabase ha bloqueado el follow! Motivo: " + error.message);
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   if (loading) {
     return <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">Buscando usuario...</div>;
@@ -78,9 +132,28 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           }}></div>
           
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: "0 0 10px 0", fontSize: "36px", fontWeight: "bold", color: "#111" }}>
-              {userProfile.nickname}
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "10px" }}>
+              <h1 style={{ margin: 0, fontSize: "36px", fontWeight: "bold", color: "#111" }}>
+                {userProfile.nickname}
+              </h1>
+              
+              {currentUserId && currentUserId !== userProfile.id && (
+                <button 
+                  onClick={toggleFollow}
+                  disabled={isToggling}
+                  style={{ 
+                    padding: "4px 16px", 
+                    fontSize: "14px", 
+                    fontWeight: "bold",
+                    cursor: isToggling ? "wait" : "pointer",
+                    backgroundColor: isFollowing ? "#e5e7eb" : "buttonface"
+                  }}
+                >
+                  {isFollowing ? "Unfollow" : "Follow"}
+                </button>
+              )}
+            </div>
+            
             <p style={{ margin: 0, color: "#444", lineHeight: "1.6", fontSize: "16px", maxWidth: "800px", whiteSpace: "pre-wrap" }}>
               {userProfile.bio}
             </p>

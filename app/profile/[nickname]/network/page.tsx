@@ -1,24 +1,31 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function ProfileNetworkPage() {
   const params = useParams();
+  const router = useRouter();
   const targetNickname = params.nickname as string;
 
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [followers, setFollowers] = useState<any[]>([]);
   const [following, setFollowing] = useState<any[]>([]);
+  
+  const [myFollowingIds, setMyFollowingIds] = useState<string[]>([]);
 
   useEffect(() => {
     const cargarNetwork = async () => {
       setLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) setCurrentUserId(session.user.id);
+        let loggedUserId = null;
+        if (session) {
+          loggedUserId = session.user.id;
+          setCurrentUserId(loggedUserId);
+        }
 
         const { data: profile } = await supabase
           .from("profiles")
@@ -41,6 +48,18 @@ export default function ProfileNetworkPage() {
 
         if (followersData) setFollowers(followersData.map((f: any) => Array.isArray(f.profiles) ? f.profiles[0] : f.profiles));
         if (followingData) setFollowing(followingData.map((f: any) => Array.isArray(f.profiles) ? f.profiles[0] : f.profiles));
+
+        if (loggedUserId) {
+          const { data: myFollows } = await supabase
+            .from("follows")
+            .select("following_id")
+            .eq("follower_id", loggedUserId);
+          
+          if (myFollows) {
+            setMyFollowingIds(myFollows.map(f => f.following_id));
+          }
+        }
+
       } catch (error) {
         console.error(error);
       } finally {
@@ -51,19 +70,31 @@ export default function ProfileNetworkPage() {
     if (targetNickname) cargarNetwork();
   }, [targetNickname]);
 
-  const handleFollow = async (targetIdToFollow: string) => {
+  const toggleFollowList = async (targetUserId: string, isCurrentlyFollowing: boolean) => {
     if (!currentUserId) return;
     try {
-      const { error } = await supabase
-        .from("follows")
-        .insert({ follower_id: currentUserId, following_id: targetIdToFollow });
-      
-      if (!error) {
-        const targetUser = followers.find((f) => f.id === targetIdToFollow);
-        if (targetUser) setFollowing((prev) => [...prev, targetUser]);
+      if (isCurrentlyFollowing) {
+        const { error } = await supabase
+          .from("follows")
+          .delete()
+          .eq("follower_id", currentUserId)
+          .eq("following_id", targetUserId);
+          
+        if (error) throw error;
+
+        setMyFollowingIds(prev => prev.filter(id => id !== targetUserId));
+      } else {
+        const { error } = await supabase
+          .from("follows")
+          .insert({ follower_id: currentUserId, following_id: targetUserId });
+          
+        if (error) throw error;
+
+        setMyFollowingIds(prev => [...prev, targetUserId]);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("Error en la network:", error);
+      alert("La BBDD ha bloqueado el follow. Motivo: " + error.message);
     }
   };
 
@@ -76,14 +107,27 @@ export default function ProfileNetworkPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {followers.length > 0 ? (
             followers.map((user) => {
-              const isFollowingBack = following.some((f) => f.id === user.id);
+              const amIFollowing = myFollowingIds.includes(user.id);
               return (
                 <div key={user.id} style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ width: "55px", height: "55px", flexShrink: 0, border: "2px inset #fff", backgroundColor: "#ccc", backgroundImage: `url(${user.pfp_url || 'https://www.gravatar.com/avatar/0?d=mp&f=y'})`, backgroundSize: "cover", backgroundPosition: "center" }}></div>
+                  <div 
+                    onClick={() => router.push(`/profile/${user.nickname}`)}
+                    style={{ width: "55px", height: "55px", flexShrink: 0, border: "2px inset #fff", backgroundColor: "#ccc", backgroundImage: `url(${user.pfp_url || 'https://www.gravatar.com/avatar/0?d=mp&f=y'})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "pointer" }}
+                  ></div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <span style={{ fontWeight: "bold", fontSize: "16px" }}>{user.nickname}</span>
-                    {currentUserId && currentUserId !== user.id && !isFollowingBack && (
-                      <button onClick={() => handleFollow(user.id)} style={{ padding: "2px 10px", fontSize: "12px", width: "fit-content" }}>Follow</button>
+                    <span 
+                      onClick={() => router.push(`/profile/${user.nickname}`)}
+                      style={{ fontWeight: "bold", fontSize: "16px", cursor: "pointer" }}
+                    >
+                      {user.nickname}
+                    </span>
+                    {currentUserId && currentUserId !== user.id && (
+                      <button 
+                        onClick={() => toggleFollowList(user.id, amIFollowing)} 
+                        style={{ padding: "2px 10px", fontSize: "12px", width: "fit-content", backgroundColor: amIFollowing ? "#e5e7eb" : "buttonface" }}
+                      >
+                        {amIFollowing ? "Unfollow" : "Follow"}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -99,14 +143,33 @@ export default function ProfileNetworkPage() {
         <legend style={{ fontSize: "18px" }}>Following</legend>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {following.length > 0 ? (
-            following.map((user) => (
-              <div key={user.id} style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                <div style={{ width: "55px", height: "55px", flexShrink: 0, border: "2px inset #fff", backgroundColor: "#ccc", backgroundImage: `url(${user.pfp_url || 'https://www.gravatar.com/avatar/0?d=mp&f=y'})`, backgroundSize: "cover", backgroundPosition: "center" }}></div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <span style={{ fontWeight: "bold", fontSize: "16px" }}>{user.nickname}</span>
+            following.map((user) => {
+              const amIFollowing = myFollowingIds.includes(user.id);
+              return (
+                <div key={user.id} style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div 
+                    onClick={() => router.push(`/profile/${user.nickname}`)}
+                    style={{ width: "55px", height: "55px", flexShrink: 0, border: "2px inset #fff", backgroundColor: "#ccc", backgroundImage: `url(${user.pfp_url || 'https://www.gravatar.com/avatar/0?d=mp&f=y'})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "pointer" }}
+                  ></div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <span 
+                      onClick={() => router.push(`/profile/${user.nickname}`)}
+                      style={{ fontWeight: "bold", fontSize: "16px", cursor: "pointer" }}
+                    >
+                      {user.nickname}
+                    </span>
+                    {currentUserId && currentUserId !== user.id && (
+                      <button 
+                        onClick={() => toggleFollowList(user.id, amIFollowing)} 
+                        style={{ padding: "2px 10px", fontSize: "12px", width: "fit-content", backgroundColor: amIFollowing ? "#e5e7eb" : "buttonface" }}
+                      >
+                        {amIFollowing ? "Unfollow" : "Follow"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p style={{ color: "#666" }}>No sigue a nadie todavía.</p>
           )}
