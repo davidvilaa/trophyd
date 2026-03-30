@@ -175,12 +175,14 @@ export default function BusquedaPage() {
             outline: none !important;
           }
           .user-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
             cursor: pointer;
+            position: relative;
           }
           .user-card:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transform: scale(1.05); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.25) !important;
+            z-index: 10;
           }
         `}</style>
         
