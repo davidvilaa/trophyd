@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { UserPlus, UserMinus } from "lucide-react";
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -85,7 +86,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           .eq("following_id", userProfile.id);
           
         if (error) throw error;
-        
         setIsFollowing(false);
       } else {
         const { error } = await supabase
@@ -93,7 +93,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           .insert({ follower_id: currentUserId, following_id: userProfile.id });
           
         if (error) throw error;
-        
         setIsFollowing(true);
       }
     } catch (error: any) {
@@ -132,24 +131,34 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           }}></div>
           
           <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px", marginBottom: "10px", width: "100%" }}>
               <h1 style={{ margin: 0, fontSize: "36px", fontWeight: "bold", color: "#111" }}>
                 {userProfile.nickname}
               </h1>
               
               {currentUserId && currentUserId !== userProfile.id && (
                 <button 
+                  className="default"
                   onClick={toggleFollow}
                   disabled={isToggling}
                   style={{ 
-                    padding: "4px 16px", 
-                    fontSize: "14px", 
-                    fontWeight: "bold",
-                    cursor: isToggling ? "wait" : "pointer",
-                    backgroundColor: isFollowing ? "#e5e7eb" : "buttonface"
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "8px", 
+                    padding: "6px 15px",
+                    fontSize: "14px",
+                    cursor: isToggling ? "wait" : "pointer" 
                   }}
                 >
-                  {isFollowing ? "Unfollow" : "Follow"}
+                  {isFollowing ? (
+                    <>
+                      <UserMinus size={20} strokeWidth={2.5} /> Unfollow
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus size={20} strokeWidth={2.5} /> Follow
+                    </>
+                  )}
                 </button>
               )}
             </div>

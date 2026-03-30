@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { UserPlus, UserMinus } from "lucide-react";
 
 export default function ProfileNetworkPage() {
   const params = useParams();
@@ -79,22 +80,20 @@ export default function ProfileNetworkPage() {
           .delete()
           .eq("follower_id", currentUserId)
           .eq("following_id", targetUserId);
-          
+        
         if (error) throw error;
-
         setMyFollowingIds(prev => prev.filter(id => id !== targetUserId));
       } else {
         const { error } = await supabase
           .from("follows")
           .insert({ follower_id: currentUserId, following_id: targetUserId });
-          
+        
         if (error) throw error;
-
         setMyFollowingIds(prev => [...prev, targetUserId]);
       }
     } catch (error: any) {
       console.error("Error en la network:", error);
-      alert("La BBDD ha bloqueado el follow. Motivo: " + error.message);
+      alert("¡Supabase ha bloqueado el follow! Motivo: " + error.message);
     }
   };
 
@@ -123,10 +122,19 @@ export default function ProfileNetworkPage() {
                     </span>
                     {currentUserId && currentUserId !== user.id && (
                       <button 
+                        className="default"
                         onClick={() => toggleFollowList(user.id, amIFollowing)} 
-                        style={{ padding: "2px 10px", fontSize: "12px", width: "fit-content", backgroundColor: amIFollowing ? "#e5e7eb" : "buttonface" }}
+                        style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 10px", fontSize: "12px", width: "fit-content" }}
                       >
-                        {amIFollowing ? "Unfollow" : "Follow"}
+                        {amIFollowing ? (
+                          <>
+                            <UserMinus size={14} strokeWidth={2.5} /> Unfollow
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={14} strokeWidth={2.5} /> Follow
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
@@ -160,10 +168,19 @@ export default function ProfileNetworkPage() {
                     </span>
                     {currentUserId && currentUserId !== user.id && (
                       <button 
+                        className="default"
                         onClick={() => toggleFollowList(user.id, amIFollowing)} 
-                        style={{ padding: "2px 10px", fontSize: "12px", width: "fit-content", backgroundColor: amIFollowing ? "#e5e7eb" : "buttonface" }}
+                        style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 10px", fontSize: "12px", width: "fit-content" }}
                       >
-                        {amIFollowing ? "Unfollow" : "Follow"}
+                        {amIFollowing ? (
+                          <>
+                            <UserMinus size={14} strokeWidth={2.5} /> Unfollow
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={14} strokeWidth={2.5} /> Follow
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
