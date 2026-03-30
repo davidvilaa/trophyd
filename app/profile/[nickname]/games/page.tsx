@@ -1,17 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Eraser } from "lucide-react";
 
 export default function ProfileGamesPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const targetNickname = params.nickname as string;
 
   const [loading, setLoading] = useState(true);
   const [allGames, setAllGames] = useState<any[]>([]);
-  const [filterStatus, setFilterStatus] = useState("all");
+  
+  const [filterStatus, setFilterStatus] = useState("completed");
   
   const ratingFromUrl = searchParams.get("rating");
   const [filterRating, setFilterRating] = useState(ratingFromUrl || "all");
@@ -46,8 +49,17 @@ export default function ProfileGamesPage() {
     if (targetNickname) cargarJuegos();
   }, [targetNickname]);
 
+  const clearFilters = () => {
+    setFilterStatus("completed");
+    setFilterRating("all");
+    setSortBy("title_asc");
+    router.replace(`/profile/${targetNickname}/games`, { scroll: false });
+  };
+
+  const hasActiveFilters = filterStatus !== "completed" || filterRating !== "all" || sortBy !== "title_asc";
+
   const processedGames = allGames
-    .filter((g) => filterStatus === "all" || g.status === filterStatus)
+    .filter((g) => g.status === filterStatus)
     .filter((g) => filterRating === "all" || Number(g.rating) === Number(filterRating))
     .sort((a, b) => {
       if (sortBy === "title_asc") return a.games.title.localeCompare(b.games.title);
@@ -58,43 +70,95 @@ export default function ProfileGamesPage() {
     });
 
   const escalas = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5];
+  const statuses = ["completed", "playing", "paused", "dropped", "wishlist"];
 
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando colección...</div>;
 
   return (
     <fieldset style={{ padding: "20px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "20px" }}>
       <legend style={{ fontSize: "18px" }}>Game Collection</legend>
-      <div style={{ display: "flex", gap: "15px", alignItems: "center", paddingBottom: "15px", borderBottom: "1px solid #ccc", flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <label htmlFor="filterStatus">Status:</label>
-          <select id="filterStatus" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All Games</option>
-            <option value="playing">Playing</option>
-            <option value="completed">Completed</option>
-            <option value="paused">Paused</option>
-            <option value="dropped">Dropped</option>
-            <option value="wishlist">Wishlist</option>
-          </select>
-        </div>
+      
+      <style>{`
+        .status-btn {
+          padding: 4px 12px;
+          cursor: pointer;
+          text-transform: capitalize;
+          transition: all 0.2s ease;
+        }
+        .status-btn.active {
+          background: #e3e3e3 !important;
+          box-shadow: inset 0 2px 4px rgba(0,0,0,0.25) !important;
+          outline: none !important;
+        }
+        .reset-btn-narrow {
+          background: none;
+          border: none;
+          color: #d9534f;
+          cursor: default;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          width: fit-content;
+          transition: all 0.2s ease;
+          opacity: 0.4;
+        }
+        .reset-btn-narrow.active {
+          cursor: pointer;
+          opacity: 1;
+        }
+        .reset-btn-narrow.active:hover {
+          color: #a94442;
+        }
+        .reset-btn-narrow:focus-visible {
+          outline: 1px dotted #000 !important;
+          outline-offset: -3px !important;
+        }
+      `}</style>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "15px", borderBottom: "1px solid #ccc", flexWrap: "wrap", gap: "15px" }}>
         
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <label htmlFor="filterRating">Rating:</label>
-          <select id="filterRating" value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
-            <option value="all">All Ratings</option>
-            {escalas.map(nota => (
-              <option key={nota} value={nota}>{nota} Stars</option>
-            ))}
-          </select>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {statuses.map((status) => (
+            <button
+              key={status}
+              className={`status-btn ${filterStatus === status ? "active" : ""}`}
+              onClick={() => setFilterStatus(status)}
+            >
+              {status}
+            </button>
+          ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <label htmlFor="sortBy">Sort By:</label>
-          <select id="sortBy" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="title_asc">Title (A-Z)</option>
-            <option value="title_desc">Title (Z-A)</option>
-            <option value="rating_desc">Highest Rated</option>
-            <option value="time_desc">Most Played Time</option>
-          </select>
+        <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="filterRating">Rating:</label>
+            <select id="filterRating" value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
+              <option value="all">Filter...</option>
+              {escalas.map(nota => (
+                <option key={nota} value={nota}>{nota} ★</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="sortBy">Sort By:</label>
+            <select id="sortBy" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="title_asc">Title (A-Z)</option>
+              <option value="title_desc">Title (Z-A)</option>
+              <option value="rating_desc">Highest Rated</option>
+              <option value="time_desc">Most Played Time</option>
+            </select>
+          </div>
+
+          <button
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
+            className={`reset-btn-narrow ${hasActiveFilters ? "active" : ""}`}
+            title="Clear Filters"
+          >
+            <Eraser size={18} />
+          </button>
         </div>
       </div>
       

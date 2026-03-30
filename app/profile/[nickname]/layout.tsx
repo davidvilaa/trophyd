@@ -121,7 +121,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-black pt-10 pb-20 px-4">
-      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
         
         <div style={{ display: "flex", gap: "30px", marginBottom: "40px", alignItems: "center" }}>
           <div style={{ 
