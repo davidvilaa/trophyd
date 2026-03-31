@@ -161,28 +161,46 @@ export default function ProfileGamesPage() {
         }
 
         .embedded-badge {
-          flex: 1;
+          flex: 1 1 0%; 
           justify-content: center;
-          background-color: rgba(0, 0, 0, 0.7);
+          
+          background-color: rgba(20, 30, 40, 0.5); 
+          background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
+          
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-top-color: rgba(255, 255, 255, 0.7);
+          border-bottom-color: rgba(0, 0, 0, 0.8);
+          border-radius: 6px;
+          
           color: #fff;
           padding: 3px 4px;
-          border-radius: 4px;
           font-size: 11px;
           font-weight: bold;
           display: flex;
           align-items: center;
           gap: 4px;
-          box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.4);
+          
+          box-shadow: 
+            inset 0 1px 1px rgba(255, 255, 255, 0.7), 
+            inset 0 -1px 3px rgba(0, 0, 0, 0.5), 
+            0 4px 10px rgba(0, 0, 0, 0.6);
+            
           text-transform: capitalize;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          
+          text-shadow: 0 1px 2px rgba(0,0,0,0.9);
         }
 
         .embedded-badge svg {
           stroke-width: 2.5px;
-          color: #e3e3e3;
+          color: #fff;
           flex-shrink: 0;
+          filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
         }
       `}</style>
 
