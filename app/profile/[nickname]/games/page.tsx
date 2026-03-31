@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Eraser, Clock, Dumbbell } from "lucide-react";
+import { Eraser, Clock, Dumbbell, X } from "lucide-react";
+import GameCard3D from "@/components/gameCard3D";
+import { Canvas } from "@react-three/fiber";
+import { View } from "@react-three/drei";
 
 export default function ProfileGamesPage() {
   const params = useParams();
@@ -13,46 +16,76 @@ export default function ProfileGamesPage() {
 
   const [loading, setLoading] = useState(true);
   const [allGames, setAllGames] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   const [filterStatus, setFilterStatus] = useState("completed");
-  
   const ratingFromUrl = searchParams.get("rating");
   const [filterRating, setFilterRating] = useState(ratingFromUrl || "all");
-  
   const [sortBy, setSortBy] = useState("added_desc");
 
+  const mainRef = useRef<HTMLDivElement>(null!);
+  const [focusedGame, setFocusedGame] = useState<any | null>(null);
+  const [isLogging, setIsLogging] = useState(false);
+  const [notificacion, setNotificacion] = useState<{ titulo: string, mensaje: string } | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const cargarJuegos = async () => {
+    setLoading(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("nickname", targetNickname)
+        .single();
+
+      if (!profile) return;
+
+      const { data: allGamesData } = await supabase
+        .from("user_games")
+        .select(`*, games (title, cover_image_url)`)
+        .eq("user_id", profile.id);
+
+      if (allGamesData) setAllGames(allGamesData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const cargarJuegos = async () => {
-      setLoading(true);
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("nickname", targetNickname)
-          .single();
-
-        if (!profile) return;
-
-        const { data: allGamesData } = await supabase
-          .from("user_games")
-          .select(`*, games (title, cover_image_url)`)
-          .eq("user_id", profile.id);
-
-        if (allGamesData) setAllGames(allGamesData);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+    const comprobarSesion = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) setCurrentUserId(session.user.id);
     };
+    comprobarSesion();
+  }, []);
 
+  useEffect(() => {
     if (targetNickname) cargarJuegos();
   }, [targetNickname]);
+
+  useEffect(() => {
+    if (focusedGame) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => { document.body.style.overflow = "auto"; };
+  }, [focusedGame]);
 
   const clearFilters = () => {
     setFilterRating("all");
     setSortBy("added_desc");
     router.replace(`/profile/${targetNickname}/games`, { scroll: false });
+  };
+
+  const cerrarNotificacion = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setNotificacion(null);
+      setIsClosing(false);
+    }, 500);
   };
 
   const hasActiveFilters = filterRating !== "all" || sortBy !== "added_desc";
@@ -79,206 +112,300 @@ export default function ProfileGamesPage() {
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando colección...</div>;
 
   return (
-    <fieldset style={{ padding: "20px", backgroundColor: "#fff", border: "1px solid #ccc", borderRadius: "4px", display: "flex", flexDirection: "column", gap: "20px" }}>
-      
-      <style>{`
-        .status-btn {
-          padding: 4px 12px;
-          cursor: pointer;
-          text-transform: capitalize;
-          transition: all 0.2s ease;
-        }
-        .status-btn.active {
-          background: #e3e3e3 !important;
-          box-shadow: inset 0 2px 4px rgba(0,0,0,0.25) !important;
-          outline: none !important;
-        }
-        .reset-btn-narrow {
-          background: none;
-          border: none;
-          cursor: default;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-          transition: all 0.2s ease;
-          opacity: 0.4;
-          color: #d9534f;
-          width: fit-content;
-        }
-        .reset-btn-narrow.active {
-          cursor: pointer;
-          opacity: 1;
-        }
+    <div ref={mainRef} style={{ position: "relative", minHeight: "100%" }}>
+      <fieldset style={{ padding: "20px", backgroundColor: "#fff", border: "1px solid #ccc", borderRadius: "4px", display: "flex", flexDirection: "column", gap: "20px" }}>
         
-        .game-case-container {
-          position: relative;
-          cursor: pointer;
-          perspective: 1000px;
-          aspect-ratio: 3/4;
-          z-index: 1;
-        }
-
-        .game-case {
-          width: 100%;
-          height: 100%;
-          position: relative;
-          background-size: cover;
-          background-position: center;
-          border: 2px inset #fff;
-          background-color: #e5e7eb;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          transform-style: preserve-3d;
-          transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-        }
-
-        .game-case-container:hover {
-          z-index: 20;
-        }
-
-        .game-case-container:hover .game-case {
-          transform: rotateX(8deg) rotateY(-8deg) scale(1.15) translateZ(30px);
-          box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
-        }
-
-        .badges-area {
-          position: absolute;
-          bottom: 12px;
-          left: 50%;
-          transform: translateX(-50%) translateZ(50px);
-          width: 115%;
-          display: flex;
-          flex-direction: row;
-          justify-content: center;
-          gap: 5px;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-          transform-style: preserve-3d;
-        }
-
-        .game-case-container:hover .badges-area {
-          opacity: 1;
-        }
-
-        .embedded-badge {
-          flex: 1 1 0%; 
-          justify-content: center;
+        <style>{`
+          .status-btn {
+            padding: 4px 12px;
+            cursor: pointer;
+            text-transform: capitalize;
+            transition: all 0.2s ease;
+          }
+          .status-btn.active {
+            background: #e3e3e3 !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.25) !important;
+            outline: none !important;
+          }
+          .reset-btn-narrow {
+            background: none;
+            border: none;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.2s ease;
+            opacity: 0.4;
+            color: #d9534f;
+            width: fit-content;
+          }
+          .reset-btn-narrow.active {
+            cursor: pointer;
+            opacity: 1;
+          }
           
-          background-color: rgba(20, 30, 40, 0.5); 
-          background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
-          
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-          
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          border-top-color: rgba(255, 255, 255, 0.7);
-          border-bottom-color: rgba(0, 0, 0, 0.8);
-          border-radius: 6px;
-          
-          color: #fff;
-          padding: 3px 4px;
-          font-size: 11px;
-          font-weight: bold;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          
-          box-shadow: 
-            inset 0 1px 1px rgba(255, 255, 255, 0.7), 
-            inset 0 -1px 3px rgba(0, 0, 0, 0.5), 
-            0 4px 10px rgba(0, 0, 0, 0.6);
+          .game-case-container {
+            position: relative;
+            cursor: pointer;
+            perspective: 1000px;
+            aspect-ratio: 3/4;
+            z-index: 1;
+          }
+
+          .game-case {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            border: 2px inset #fff;
+            background-color: #e5e7eb;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transform-style: preserve-3d;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+          }
+
+          .game-case-container:hover {
+            z-index: 20;
+          }
+
+          .game-case-container:hover .game-case {
+            transform: rotateX(8deg) rotateY(-8deg) scale(1.15) translateZ(30px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+          }
+
+          .badges-area {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(50px);
+            width: 115%; 
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            transform-style: preserve-3d;
+          }
+
+          .game-case-container:hover .badges-area {
+            opacity: 1;
+          }
+
+          .embedded-badge {
+            flex: 1 1 0%; 
+            justify-content: center;
             
-          text-transform: capitalize;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+            background-color: rgba(20, 30, 40, 0.5); 
+            background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
+            
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-top-color: rgba(255, 255, 255, 0.7); 
+            border-bottom-color: rgba(0, 0, 0, 0.8);   
+            border-radius: 6px;
+            
+            color: #fff;
+            padding: 3px 4px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            
+            box-shadow: 
+              inset 0 1px 1px rgba(255, 255, 255, 0.7), 
+              inset 0 -1px 3px rgba(0, 0, 0, 0.5), 
+              0 4px 10px rgba(0, 0, 0, 0.6);
+              
+            text-transform: capitalize;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+          }
+
+          .embedded-badge svg {
+            stroke-width: 2.5px;
+            color: #fff;
+            flex-shrink: 0;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
+          }
+        `}</style>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "15px", borderBottom: "1px solid #ccc", flexWrap: "wrap", gap: "15px" }}>
           
-          text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-        }
-
-        .embedded-badge svg {
-          stroke-width: 2.5px;
-          color: #fff;
-          flex-shrink: 0;
-          filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
-        }
-      `}</style>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "15px", borderBottom: "1px solid #ccc", flexWrap: "wrap", gap: "15px" }}>
-        
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          {statuses.map((status) => (
-            <button
-              key={status}
-              className={`status-btn ${filterStatus === status ? "active" : ""}`}
-              onClick={() => setFilterStatus(status)}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <label htmlFor="filterRating">Rating:</label>
-            <select id="filterRating" value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
-              <option value="all">Filter...</option>
-              {escalas.map(nota => (
-                <option key={nota} value={nota}>{nota} ★</option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <label htmlFor="sortBy">Sort By:</label>
-            <select id="sortBy" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="added_desc">When Added</option>
-              <option value="title_asc">Title (A-Z)</option>
-              <option value="title_desc">Title (Z-A)</option>
-              <option value="rating_desc">Highest Rated</option>
-              <option value="time_desc">Most Played Time</option>
-            </select>
-          </div>
-
-          <button
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
-            className={`reset-btn-narrow ${hasActiveFilters ? "active" : ""}`}
-            title="Clear Filters"
-          >
-            <Eraser size={18} />
-          </button>
-        </div>
-      </div>
-      
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1px" }}>
-        {processedGames.length > 0 ? (
-          processedGames.map((juego) => (
-            <div key={juego.game_id} className="game-case-container" title={juego.games.title}>
-              <div 
-                className="game-case" 
-                style={{ backgroundImage: `url(${juego.games.cover_image_url})` }}
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {statuses.map((status) => (
+              <button
+                key={status}
+                className={`status-btn ${filterStatus === status ? "active" : ""}`}
+                onClick={() => setFilterStatus(status)}
               >
-                <div className="badges-area">
-                  <div className="embedded-badge" title="Time Played">
-                    <Clock size={16} />
-                    <span>{juego.time_played ? `${juego.time_played}h` : "--h"}</span>
-                  </div>
-                  <div className="embedded-badge" title="Difficulty">
-                    <Dumbbell size={16} />
-                    <span>{juego.difficulty || "Default"}</span>
-                  </div>
-                  <div className="embedded-badge" title="Rating">
-                    <span>{juego.rating ? `★ ${juego.rating}` : "★ --"}</span>
+                {status}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <label htmlFor="filterRating">Rating:</label>
+              <select id="filterRating" value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
+                <option value="all">Filter...</option>
+                {escalas.map(nota => (
+                  <option key={nota} value={nota}>{nota} ★</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <label htmlFor="sortBy">Sort By:</label>
+              <select id="sortBy" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="added_desc">When Added</option>
+                <option value="title_asc">Title (A-Z)</option>
+                <option value="title_desc">Title (Z-A)</option>
+                <option value="rating_desc">Highest Rated</option>
+                <option value="time_desc">Most Played Time</option>
+              </select>
+            </div>
+
+            <button
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+              className={`reset-btn-narrow ${hasActiveFilters ? "active" : ""}`}
+              title="Clear Filters"
+            >
+              <Eraser size={18} />
+            </button>
+          </div>
+        </div>
+        
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1px" }}>
+          {processedGames.length > 0 ? (
+            processedGames.map((juego) => (
+              <div 
+                key={juego.game_id} 
+                className="game-case-container" 
+                title={juego.games.title}
+                onClick={() => {
+                  setFocusedGame({
+                    id: juego.game_id,
+                    titulo: juego.games.title,
+                    portada: juego.games.cover_image_url
+                  });
+                  setIsLogging(true);
+                }}
+              >
+                <div 
+                  className="game-case" 
+                  style={{ backgroundImage: `url(${juego.games.cover_image_url})` }}
+                >
+                  <div className="badges-area">
+                    <div className="embedded-badge" title="Time Played">
+                      <Clock size={16} />
+                      <span>{juego.time_played ? `${juego.time_played}h` : "--h"}</span>
+                    </div>
+                    <div className="embedded-badge" title="Difficulty">
+                      <Dumbbell size={16} />
+                      <span>{juego.difficulty || "Default"}</span>
+                    </div>
+                    <div className="embedded-badge" title="Rating">
+                      <span>{juego.rating ? `★ ${juego.rating}` : "★ --"}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <p style={{ gridColumn: "1 / -1", textAlign: "center", color: "#666", padding: "20px 0" }}>No se encontraron juegos con estos filtros.</p>
+          )}
+        </div>
+      </fieldset>
+
+      {focusedGame && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+          backgroundColor: "rgba(0, 0, 0, 0.6)", backdropFilter: "blur(5px)",
+          zIndex: 100000, display: "flex", flexDirection: "column",
+          justifyContent: "flex-end", alignItems: "center", paddingBottom: "30px" 
+        }}>
+          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 105 }}>
+            <GameCard3D 
+              coverUrl={focusedGame.portada} 
+              consola="pc"
+              isFocused={true} 
+              isLogging={isLogging}
+              juego={focusedGame} 
+              userId={currentUserId}
+              onSaveSuccess={(action) => {
+                setIsLogging(false); 
+                setFocusedGame(null);
+                cargarJuegos();
+                setNotificacion({
+                  titulo: action === "deleted" ? "¡Juego Borrado!" : "¡Juego Actualizado!",
+                  mensaje: action === "deleted" 
+                    ? `Has eliminado ${focusedGame.titulo} de tu colección.` 
+                    : `Has actualizado ${focusedGame.titulo} con éxito.`
+                });
+                setTimeout(() => cerrarNotificacion(), 3000);
+              }} 
+            />
+          </div>
+
+          <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px", position: "relative" }}>
+            <div className="window-body" style={{ display: "flex", gap: "15px", alignItems: "center", margin: 0 }}>
+              <button 
+                onClick={() => setIsLogging(!isLogging)}
+                style={{ fontWeight: "bold", padding: "5px 15px", cursor: "pointer" }}
+              >
+                {isLogging ? "Volver a Portada" : "Loguear Juego"}
+              </button>
+
+              <button 
+                onClick={() => { setFocusedGame(null); setIsLogging(false); }}
+                style={{ 
+                  minWidth: "40px", padding: "4px", cursor: "pointer", color: "#dc2626",
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}
+                title="Cerrar Focus"
+              >
+                <X size={20} strokeWidth={4} />
+              </button>
             </div>
-          ))
-        ) : (
-          <p style={{ gridColumn: "1 / -1", textAlign: "center", color: "#666", padding: "20px 0" }}>No se encontraron juegos con estos filtros.</p>
-        )}
-      </div>
-    </fieldset>
+          </div>
+        </div>
+      )}
+
+      <Canvas
+        eventSource={mainRef}
+        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 10 }}
+        camera={{ position: [0, 0, 22], fov: 20 }}
+      >
+        <View.Port />
+      </Canvas>
+
+      {notificacion && (
+        <div style={{ position: "fixed", top: "80px", left: "20px", zIndex: 9999, opacity: isClosing ? 0 : 1, transition: "opacity 0.5s ease-in-out" }}>
+          <div role="tooltip" style={{ position: "relative", width: "300px", maxWidth: "90vw", backgroundColor: "#ffffe1", border: "1px solid #000", padding: "10px", boxShadow: "2px 2px 5px rgba(0,0,0,0.2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+              <span style={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: "5px", color: "#000", fontSize: "14px" }}>
+                {notificacion.titulo}
+              </span>
+              <button onClick={() => setNotificacion(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                <X size={14} strokeWidth={3} />
+              </button>
+            </div>
+            <p style={{ margin: 0, fontSize: "12px", color: "#333", lineHeight: "1.4" }}>
+              {notificacion.mensaje}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
