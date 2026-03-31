@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Eraser, Clock, Dumbbell, Award } from "lucide-react";
+import { Eraser, Clock, Dumbbell } from "lucide-react";
 
 export default function ProfileGamesPage() {
   const params = useParams();
@@ -79,8 +79,7 @@ export default function ProfileGamesPage() {
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando colección...</div>;
 
   return (
-    <fieldset style={{ padding: "20px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "20px" }}>
-      <legend style={{ fontSize: "18px" }}>Game Collection</legend>
+    <fieldset style={{ padding: "20px", backgroundColor: "#fff", border: "1px solid #ccc", borderRadius: "4px", display: "flex", flexDirection: "column", gap: "20px" }}>
       
       <style>{`
         .status-btn {
@@ -147,7 +146,7 @@ export default function ProfileGamesPage() {
           bottom: 12px;
           left: 50%;
           transform: translateX(-50%) translateZ(50px);
-          width: max-content;
+          width: 115%;
           display: flex;
           flex-direction: row;
           justify-content: center;
@@ -162,11 +161,13 @@ export default function ProfileGamesPage() {
         }
 
         .embedded-badge {
+          flex: 1;
+          justify-content: center;
           background-color: rgba(0, 0, 0, 0.7);
           color: #fff;
-          padding: 3px 6px;
+          padding: 3px 4px;
           border-radius: 4px;
-          font-size: 10px;
+          font-size: 11px;
           font-weight: bold;
           display: flex;
           align-items: center;
@@ -174,11 +175,14 @@ export default function ProfileGamesPage() {
           box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.4);
           text-transform: capitalize;
           white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .embedded-badge svg {
           stroke-width: 2.5px;
           color: #e3e3e3;
+          flex-shrink: 0;
         }
       `}</style>
 
@@ -239,16 +243,15 @@ export default function ProfileGamesPage() {
               >
                 <div className="badges-area">
                   <div className="embedded-badge" title="Time Played">
-                    <Clock size={14} />
-                    {juego.time_played ? `${juego.time_played}h` : "--h"}
+                    <Clock size={16} />
+                    <span>{juego.time_played ? `${juego.time_played}h` : "--h"}</span>
                   </div>
                   <div className="embedded-badge" title="Difficulty">
-                    <Dumbbell size={14} />
-                    {juego.difficulty || "Default"}
+                    <Dumbbell size={16} />
+                    <span>{juego.difficulty || "Default"}</span>
                   </div>
                   <div className="embedded-badge" title="Rating">
-                    <Award size={14} />
-                    {juego.rating ? `★ ${juego.rating}` : "★ --"}
+                    <span>{juego.rating ? `★ ${juego.rating}` : "★ --"}</span>
                   </div>
                 </div>
               </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Clock, Dumbbell, Award } from "lucide-react";
 
 export default function ProfileContentPage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function ProfileContentPage() {
 
         if (ratingsData && ratingsData.length > 0) {
           let suma = 0;
-          let counts: Record<number, number> = { 0.5: 0, 1: 0, 1.5: 0, 2: 2, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 };
+          let counts: Record<number, number> = { 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 };
 
           ratingsData.forEach((row) => {
             const nota = Number(row.rating);
@@ -73,6 +74,9 @@ export default function ProfileContentPage() {
           .from("user_games")
           .select(`
             game_id,
+            time_played,
+            difficulty,
+            rating,
             games (
               title,
               cover_image_url
@@ -100,7 +104,6 @@ export default function ProfileContentPage() {
   }, [router, targetNickname]);
 
   const favoritosMostrados = Array(5).fill(null).map((_, index) => favoritos[index] || null);
-
   const escalas = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
   if (loading) {
@@ -112,22 +115,94 @@ export default function ProfileContentPage() {
       <style>{`
         .rating-bar {
           background-color: #b9d5fa;
-          /* Mantenemos height, añadimos transform y shadow con la curva cubic-bezier premium */
           transition: height 0.5s ease-out, background-color 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
           cursor: pointer;
           position: relative;
-          /* CLAVE: La barra crece hacia ARRIBA desde la base */
           transform-origin: bottom; 
         }
         
         .rating-bar:hover {
           background-color: #7baaf7;
-          /* Pop-out: Crece un 15% a lo ancho y un 10% a lo alto */
           transform: scaleX(1.15) scaleY(1.1); 
-          /* Sombra suave para dar relieve */
           box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-          /* Se pone por encima de las barras vecinas */
           z-index: 10; 
+        }
+
+        .fav-case-container {
+          position: relative;
+          perspective: 1000px;
+          aspect-ratio: 3/4;
+          z-index: 1;
+        }
+
+        .fav-case-container.has-game {
+          cursor: pointer;
+        }
+
+        .fav-case {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          background-size: cover;
+          background-position: center;
+          border: 2px inset #fff;
+          background-color: #e5e7eb;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          transform-style: preserve-3d;
+          transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+        }
+
+        .fav-case-container.has-game:hover {
+          z-index: 20;
+        }
+
+        .fav-case-container.has-game:hover .fav-case {
+          transform: rotateX(8deg) rotateY(-8deg) scale(1.15) translateZ(30px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+        }
+
+        .badges-area {
+          position: absolute;
+          bottom: 12px;
+          left: 50%;
+          transform: translateX(-50%) translateZ(50px);
+          width: 115%;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          gap: 5px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          transform-style: preserve-3d;
+        }
+
+        .fav-case-container.has-game:hover .badges-area {
+          opacity: 1;
+        }
+
+        .embedded-badge {
+          flex: 1;
+          justify-content: center;
+          background-color: rgba(0, 0, 0, 0.7);
+          color: #fff;
+          padding: 3px 4px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.4);
+          text-transform: capitalize;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .embedded-badge svg {
+          stroke-width: 2.5px;
+          color: #e3e3e3;
+          flex-shrink: 0;
         }
       `}</style>
       
@@ -172,13 +247,31 @@ export default function ProfileContentPage() {
         
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "15px" }}>
           {favoritosMostrados.map((fav, index) => (
-            <div key={index} className={fav ? "game-card" : ""} style={{ 
-              aspectRatio: "3/4", backgroundColor: "#e5e7eb", border: "2px inset #fff",
-              display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: "2rem",
-              backgroundImage: fav ? `url(${fav.games?.cover_image_url})` : "none",
-              backgroundSize: "cover", backgroundPosition: "center"
-            }}>
-              {!fav && <span style={{ fontSize: "1.5rem" }}>--</span>}
+            <div key={index} className={`fav-case-container ${fav ? "has-game" : ""}`} title={fav?.games?.title}>
+              {fav ? (
+                <div 
+                  className="fav-case" 
+                  style={{ backgroundImage: `url(${fav.games?.cover_image_url})` }}
+                >
+                  <div className="badges-area">
+                    <div className="embedded-badge" title="Time Played">
+                      <Clock size={16} />
+                      <span>{fav.time_played ? `${fav.time_played}h` : "--h"}</span>
+                    </div>
+                    <div className="embedded-badge" title="Difficulty">
+                      <Dumbbell size={16} />
+                      <span>{fav.difficulty || "Default"}</span>
+                    </div>
+                    <div className="embedded-badge" title="Rating">
+                      <span>{fav.rating ? `★ ${fav.rating}` : "★ --"}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="fav-case" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: "2rem" }}>
+                  --
+                </div>
+              )}
             </div>
           ))}
         </div>

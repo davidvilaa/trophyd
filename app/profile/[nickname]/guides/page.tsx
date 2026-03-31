@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Clock, Dumbbell } from "lucide-react";
 
 export default function ProfileGuidesPage() {
   const params = useParams();
@@ -47,16 +48,123 @@ export default function ProfileGuidesPage() {
       <legend style={{ fontSize: "18px" }}>Published Guides</legend>
       <div style={{ display: "flex", alignItems: "center", paddingBottom: "10px", borderBottom: "0px solid #ccc" }}>
       </div>
+
+      <style>{`
+        .guide-case-container {
+          position: relative;
+          cursor: pointer;
+          perspective: 1000px;
+          aspect-ratio: 1/1; 
+          z-index: 1;
+        }
+
+        .guide-case {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          background-size: cover;
+          background-position: center;
+          border: 2px inset #fff;
+          background-color: #e5e7eb;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          transform-style: preserve-3d;
+          transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+        }
+
+        .guide-case-container:hover {
+          z-index: 20;
+        }
+
+        .guide-case-container:hover .guide-case {
+          transform: rotateX(8deg) rotateY(-8deg) scale(1.1) translateZ(30px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+        }
+
+        .guide-info-gradient {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0) 100%);
+          padding: 30px 10px 15px 10px;
+          color: white;
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          transition: opacity 0.2s ease;
+        }
+
+        .guide-case-container:hover .guide-info-gradient {
+          opacity: 0.2; 
+        }
+
+        .guide-badges-area {
+          position: absolute;
+          bottom: 12px;
+          left: 50%;
+          transform: translateX(-50%) translateZ(50px);
+          width: 110%;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          gap: 5px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          transform-style: preserve-3d;
+        }
+
+        .guide-case-container:hover .guide-badges-area {
+          opacity: 1;
+        }
+
+        .embedded-badge {
+          flex: 1 1 0%;
+          justify-content: center;
+          background-color: rgba(0, 0, 0, 0.85);
+          color: #fff;
+          padding: 4px 6px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.4);
+          text-transform: capitalize;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .embedded-badge svg {
+          stroke-width: 2.5px;
+          color: #e3e3e3;
+          flex-shrink: 0;
+        }
+      `}</style>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
         {guides.length > 0 ? (
           guides.map((guia) => (
-            <div key={guia.id} style={{ aspectRatio: "1/1", backgroundColor: "#e5e7eb", border: "2px inset #fff", backgroundImage: `url(${guia.games.cover_image_url})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative", cursor: "pointer", transition: "transform 0.2s ease, box-shadow 0.2s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-5px)"; e.currentTarget.style.boxShadow = "0 5px 15px rgba(0,0,0,0.3)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0) 100%)", padding: "30px 10px 10px 10px", color: "white", display: "flex", flexDirection: "column", gap: "5px" }}>
-                <div style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.title}>{guia.title}</div>
-                <div style={{ fontSize: "11px", color: "#ddd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.games.title}>{guia.games.title}</div>
-                <div style={{ display: "flex", gap: "6px", marginTop: "8px", justifyContent: "flex-end", paddingRight: "5px" }}>
-                  <div style={{ backgroundColor: "#b91c1c", color: "white", padding: "2px 6px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", whiteSpace: "nowrap" }}>Diff: {guia.average_difficulty}/10</div>
-                  <div style={{ backgroundColor: "#1d4ed8", color: "white", padding: "2px 6px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", whiteSpace: "nowrap" }}>Time: {guia.average_time}h</div>
+            <div key={guia.id} className="guide-case-container" title={guia.title}>
+              <div 
+                className="guide-case" 
+                style={{ backgroundImage: `url(${guia.games.cover_image_url})` }}
+              >
+                <div className="guide-info-gradient">
+                  <div style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.title}>{guia.title}</div>
+                  <div style={{ fontSize: "11px", color: "#ddd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.games.title}>{guia.games.title}</div>
+                </div>
+
+                <div className="guide-badges-area">
+                  <div className="embedded-badge" title="Difficulty">
+                    <Dumbbell size={16} />
+                    <span>{guia.average_difficulty ? `${guia.average_difficulty}/10` : "--/10"}</span>
+                  </div>
+                  <div className="embedded-badge" title="Time">
+                    <Clock size={16} />
+                    <span>{guia.average_time ? `${guia.average_time}h` : "--h"}</span>
+                  </div>
                 </div>
               </div>
             </div>
