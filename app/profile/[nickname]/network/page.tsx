@@ -145,7 +145,7 @@ export default function ProfileNetworkPage() {
                         <button 
                           className="default aero-btn-list"
                           onClick={() => toggleFollowList(user.id, amIFollowing)} 
-                          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 10px", fontSize: "11px", flexShrink: 0 }}
+                          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 10px", marginRight:"5px", fontSize: "11px", flexShrink: 0 }}
                         >
                           {amIFollowing ? (
                             <>
