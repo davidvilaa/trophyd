@@ -132,6 +132,12 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   }, [isLogging, userId, juego]);
 
   useEffect(() => {
+    if (!isLogging) {
+      scrollY.current = 0;
+    }
+  }, [isLogging]);
+
+  useEffect(() => {
     if (!isFocused) {
       scrollY.current = 0;
       return;
@@ -142,7 +148,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
       const velocidad = 0.01;
       scrollY.current += e.deltaY * velocidad; 
       
-      const limiteArriba = 6.7;  
+      const limiteArriba = 4.5;  
       const limiteAbajo = 0;
 
       if (scrollY.current > limiteArriba) scrollY.current = limiteArriba;
@@ -275,9 +281,8 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
     if (isLogging) {
       targetY = Math.PI; 
       targetX = 0; 
-      
       targetScale = 3.5; 
-      offsetY = -4.8;
+      offsetY = -4; 
     } 
     else if (hovered) {
       targetY = state.pointer.x * 0.6; 
