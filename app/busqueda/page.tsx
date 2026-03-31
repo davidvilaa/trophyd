@@ -283,13 +283,15 @@ export default function BusquedaPage() {
               isLogging={isLogging}
               juego={focusedGame} 
               userId={userId}
-              onSaveSuccess={() => {
+              onSaveSuccess={(action) => {
                 setIsLogging(false); 
                 setFocusedGame(null);
                 setIsClosing(false); 
                 setNotificacion({
-                  titulo: "¡Juego Guardado!",
-                  mensaje: `Has añadido ${focusedGame.titulo} a tu colección con éxito.`
+                  titulo: action === "deleted" ? "Juego Borrado" : "Juego Guardado",
+                  mensaje: action === "deleted" 
+                    ? `Has eliminado ${focusedGame.titulo} de tu colección.` 
+                    : `Has añadido ${focusedGame.titulo} a tu colección con éxito.`
                 });
                 setTimeout(() => cerrarNotificacion(), 3000);
               }} 

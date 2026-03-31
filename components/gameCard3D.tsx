@@ -62,7 +62,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId, onSaveSuccess }: { url: string, coverUrl?: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void }) {
+function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId, onSaveSuccess }: { url: string, coverUrl?: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: (action: "saved" | "deleted") => void }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -78,16 +78,58 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   const [textureContra, setTextureContra] = useState<THREE.Texture | null>(null);
 
   const scrollY = useRef(0);
+  
+  const [isExisting, setIsExisting] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0); 
   const [isFavorite, setIsFavorite] = useState(false);
-
-  const [status, setStatus] = useState("COMPLETED");
+  const [status, setStatus] = useState("completed");
   const [difficulty, setDifficulty] = useState(5);
   const [timePlayed, setTimePlayed] = useState(0);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [review, setReview] = useState("");
+
+  useEffect(() => {
+    const fetchGameData = async () => {
+      if (isLogging && userId && juego) {
+        try {
+          const { data, error } = await supabase
+            .from('user_games')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('game_id', juego.id)
+            .single();
+
+          if (data) {
+            setIsExisting(true);
+            setStatus(data.status || "completed");
+            setDifficulty(data.difficulty || 5);
+            setRating(data.rating || 0);
+            setTimePlayed(data.time_played || 0);
+            setIsFavorite(data.isFavorite || false);
+            setStartDate(data.start_date || "");
+            setEndDate(data.finish_date || "");
+            setReview(data.review || "");
+          } else {
+            setIsExisting(false);
+            setStatus("completed");
+            setDifficulty(5);
+            setRating(0);
+            setTimePlayed(0);
+            setIsFavorite(false);
+            setStartDate("");
+            setEndDate("");
+            setReview("");
+          }
+        } catch (err) {
+          console.error("No se encontró registro previo o hubo error", err);
+        }
+      }
+    };
+
+    fetchGameData();
+  }, [isLogging, userId, juego]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -286,18 +328,35 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
           review: review
         }); 
 
-      if (errorUserGame) {
-        throw errorUserGame;
-      }
+      if (errorUserGame) throw errorUserGame;
 
       console.log("¡Registro guardado correctamente!");
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      }
+      if (onSaveSuccess) onSaveSuccess("saved");
 
     } catch (error) {
       console.error("¡Peto algo conectando con Supabase!", error);
       alert("Hubo un error al guardar en la BBDD.");
+    }
+  };
+
+  const handleBorrarDeBBDD = async () => {
+    if (!userId || !juego || !isExisting) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_games')
+        .delete()
+        .eq('user_id', userId)
+        .eq('game_id', juego.id);
+
+      if (error) throw error;
+
+      console.log("¡Juego borrado correctamente!");
+      if (onSaveSuccess) onSaveSuccess("deleted");
+
+    } catch (error) {
+      console.error("¡Peto algo al borrar en Supabase!", error);
+      alert("Hubo un error al borrar en la BBDD.");
     }
   };
 
@@ -480,7 +539,19 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
                 </div>
               </fieldset>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "15px", marginTop: "10px" }}>
+                <button 
+                  onClick={handleBorrarDeBBDD} 
+                  disabled={!isExisting}
+                  style={{ 
+                    fontWeight: "bold", 
+                    padding: "6px 20px", 
+                    cursor: !isExisting ? "default" : "pointer",
+                    color: !isExisting ? "#888" : "#d9534f"
+                  }}
+                >
+                  Borrar
+                </button>
                 <button onClick={handleGuardarEnBBDD} style={{ fontWeight: "bold", padding: "6px 20px", cursor: "pointer" }}>
                   Loguear
                 </button>
@@ -494,7 +565,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId, onSaveSuccess }: { coverUrl?: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: () => void   }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId, onSaveSuccess }: { coverUrl?: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: (action: "saved" | "deleted") => void   }) {
   const [hovered, setHovered] = useState(false);
 
   const [isVisible, setIsVisible] = useState(false);
