@@ -62,7 +62,7 @@ const ESTILOS_GENERAL: Record<string, { color: string, roughness?: number, opaci
   "pc": { color: "#52565a", roughness: 0.5, opacity: 0.4},
 };
 
-function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId, onSaveSuccess }: { url: string, coverUrl?: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: (action: "saved" | "deleted") => void }) {
+function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, userId, onSaveSuccess, onPlatformFetched }: { url: string, coverUrl?: string, hovered: boolean, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: (action: "saved" | "deleted") => void, onPlatformFetched?: (platform: string) => void }) {
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const meshRef = useRef<THREE.Group>(null);
@@ -92,7 +92,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
 
   useEffect(() => {
     const fetchGameData = async () => {
-      if (isLogging && userId && juego) {
+      if (isFocused && userId && juego) {
         try {
           const { data, error } = await supabase
             .from('user_games')
@@ -111,6 +111,9 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
             setStartDate(data.start_date || "");
             setEndDate(data.finish_date || "");
             setReview(data.review || "");
+            if (data.platform && onPlatformFetched) {
+              onPlatformFetched(data.platform);
+            }
           } else {
             setIsExisting(false);
             setStatus("completed");
@@ -129,7 +132,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
     };
 
     fetchGameData();
-  }, [isLogging, userId, juego]);
+  }, [isFocused, userId, juego]);
 
   useEffect(() => {
     if (!isLogging) {
@@ -330,8 +333,9 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
           isFavorite: isFavorite, 
           start_date: startDate || null,
           finish_date: endDate || null,
-          review: review
-        }); 
+          review: review,
+          platform: consolaFinal
+        });
 
       if (errorUserGame) throw errorUserGame;
 
@@ -570,7 +574,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   );
 }
 
-export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId, onSaveSuccess }: { coverUrl?: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: (action: "saved" | "deleted") => void   }) {
+export default function GameCard3D({ coverUrl, onClick, consola, isFocused = false, isLogging = false, juego, userId, onSaveSuccess, onPlatformFetched }: { coverUrl?: string, onClick?: () => void, consola: string | null, isFocused?: boolean, isLogging?: boolean, juego?: any, userId?: string | null, onSaveSuccess?: (action: "saved" | "deleted") => void, onPlatformFetched?: (platform: string) => void }) {
   const [hovered, setHovered] = useState(false);
 
   const [isVisible, setIsVisible] = useState(false);
@@ -600,16 +604,17 @@ export default function GameCard3D({ coverUrl, onClick, consola, isFocused = fal
       <Float speed={2} rotationIntensity={0} floatIntensity={hovered ? 0.4 : 0.1}>
         <Suspense fallback={null}>
           <Model 
-              url="/models/carcasa.glb?v=10" 
-              coverUrl={coverUrl} 
-              hovered={hovered} 
-              consola={consola}
-              isFocused={isFocused}
-              isLogging={isLogging}
-              juego={juego}
-              userId={userId}
-              onSaveSuccess={onSaveSuccess}
-          />
+            url="/models/carcasa.glb?v=10" 
+            coverUrl={coverUrl} 
+            hovered={hovered} 
+            consola={consola}
+            isFocused={isFocused}
+            isLogging={isLogging}
+            juego={juego}
+            userId={userId}
+            onSaveSuccess={onSaveSuccess}
+            onPlatformFetched={onPlatformFetched}
+        />
         </Suspense>
       </Float>
       

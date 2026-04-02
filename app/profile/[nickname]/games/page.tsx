@@ -296,7 +296,8 @@ export default function ProfileGamesPage() {
                   setFocusedGame({
                     id: juego.game_id,
                     titulo: juego.games.title,
-                    portada: juego.games.cover_image_url
+                    portada: juego.games.cover_image_url,
+                    platform: juego.platform
                   });
                   setIsLogging(true);
                 }}
@@ -337,7 +338,7 @@ export default function ProfileGamesPage() {
           <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 105 }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
-              consola="pc"
+              consola={focusedGame.platform || "pc"}
               isFocused={true} 
               isLogging={isLogging}
               juego={focusedGame} 

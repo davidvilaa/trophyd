@@ -7,6 +7,7 @@ import { Clock, Dumbbell, Award, X } from "lucide-react";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
+import { platform } from "os";
 
 export default function ProfileContentPage() {
   const router = useRouter();
@@ -92,6 +93,7 @@ export default function ProfileContentPage() {
           time_played,
           difficulty,
           rating,
+          platform,
           games (
             title,
             cover_image_url
@@ -308,7 +310,8 @@ export default function ProfileContentPage() {
                     setFocusedGame({
                       id: fav.game_id,
                       titulo: fav.games.title,
-                      portada: fav.games.cover_image_url
+                      portada: fav.games.cover_image_url,
+                      platform: fav.platform
                     });
                     setIsLogging(true);
                   }
@@ -354,7 +357,7 @@ export default function ProfileContentPage() {
           <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 105 }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
-              consola="pc"
+              consola={focusedGame.platform || "pc"}
               isFocused={true} 
               isLogging={isLogging}
               juego={focusedGame} 

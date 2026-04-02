@@ -294,7 +294,8 @@ export default function BusquedaPage() {
                     : `Has añadido ${focusedGame.titulo} a tu colección con éxito.`
                 });
                 setTimeout(() => cerrarNotificacion(), 3000);
-              }} 
+              }}
+              onPlatformFetched={(plat) => setConsolaFocus(plat)} 
             />
           </div>
 
