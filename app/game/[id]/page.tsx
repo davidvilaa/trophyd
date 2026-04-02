@@ -324,7 +324,6 @@ export default function GamePage() {
                 aspect-ratio: 1/1; 
                 z-index: 1;
               }
-
               .guide-case {
                 width: 100%;
                 height: 100%;
@@ -337,84 +336,65 @@ export default function GamePage() {
                 transform-style: preserve-3d;
                 transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
               }
-
-              .guide-case-container:hover {
-                z-index: 20;
-              }
-
+              .guide-case-container:hover { z-index: 20; }
               .guide-case-container:hover .guide-case {
                 transform: rotateX(8deg) rotateY(-8deg) scale(1.1) translateZ(30px);
                 box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
               }
-
               .guide-info-gradient {
                 position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
+                bottom: 0; left: 0; right: 0;
                 background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0) 100%);
                 padding: 30px 10px 15px 10px;
                 color: white;
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
+                display: flex; flex-direction: column; gap: 5px;
                 transition: opacity 0.2s ease;
               }
-
-              .guide-case-container:hover .guide-info-gradient {
-                opacity: 0.2; 
-              }
-
+              .guide-case-container:hover .guide-info-gradient { opacity: 0.2; }
               .guide-badges-area {
                 position: absolute;
-                bottom: 12px;
-                left: 50%;
+                bottom: 12px; left: 50%;
                 transform: translateX(-50%) translateZ(50px);
                 width: 110%;
-                display: flex;
-                flex-direction: row;
-                justify-content: center;
-                gap: 5px;
+                display: flex; flex-direction: row; justify-content: center; gap: 5px;
                 opacity: 0;
                 transition: opacity 0.2s ease;
                 transform-style: preserve-3d;
               }
-
-              .guide-case-container:hover .guide-badges-area {
-                opacity: 1;
-              }
-
+              .guide-case-container:hover .guide-badges-area { opacity: 1; }
               .embedded-badge {
                 flex: 1 1 0%; 
                 justify-content: center;
                 background-color: rgba(20, 30, 40, 0.5); 
                 background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
-                backdrop-filter: blur(6px);
-                -webkit-backdrop-filter: blur(6px);
+                backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 border-top-color: rgba(255, 255, 255, 0.7);
                 border-bottom-color: rgba(0, 0, 0, 0.8);
                 border-radius: 6px;
                 color: #fff;
-                padding: 3px 4px;
-                font-size: 11px;
-                font-weight: bold;
-                display: flex;
-                align-items: center;
-                gap: 4px;
+                padding: 3px 4px; font-size: 11px; font-weight: bold;
+                display: flex; align-items: center; gap: 4px;
                 box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -1px 3px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.6);
-                text-transform: capitalize;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                text-transform: capitalize; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                 text-shadow: 0 1px 2px rgba(0,0,0,0.9);
               }
-
               .embedded-badge svg {
-                stroke-width: 2.5px;
-                color: #fff;
-                flex-shrink: 0;
+                stroke-width: 2.5px; color: #fff; flex-shrink: 0;
                 filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
+              }
+
+              .user-card {
+                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+                cursor: pointer;
+                position: relative;
+                padding: 8px; 
+                margin-bottom: 12px;
+              }
+              .user-card:hover { 
+                transform: scale(1.05); 
+                box-shadow: 0 10px 20px rgba(0,0,0,0.25) !important;
+                z-index: 10;
               }
             `}</style>
 
@@ -460,36 +440,41 @@ export default function GamePage() {
 
         <div style={{ width: "260px", flexShrink: 0, marginTop: "100px" }}>
           <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", minHeight: "200px" }}>
-            <legend style={{ fontSize: "16px", padding: "0 5px" }}>Following</legend>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            <div style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}>
               {followingVotes.length > 0 ? (
                 followingVotes.map((vote, index) => (
                   <div 
                     key={index} 
+                    className="window user-card"
                     onClick={() => router.push(`/profile/${vote.profiles.nickname}`)}
-                    style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
                   >
-                    <div style={{ 
-                      width: "40px", height: "40px", backgroundColor: "#eee", 
-                      border: "2px inset #fff", overflow: "hidden", flexShrink: 0 
-                    }}>
-                      {vote.profiles.avatar_url ? (
-                        <img src={vote.profiles.avatar_url} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>👤</div>
-                      )}
-                    </div>
+                    <div className="window-body" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "12px", margin: 0 }}>
+                      
+                      <div 
+                        style={{ 
+                          width: "45px", height: "45px", flexShrink: 0, 
+                          border: "2px inset #fff", backgroundColor: "#ccc", 
+                          backgroundImage: `url(${vote.profiles.pfp_url || 'https://www.gravatar.com/avatar/0?d=mp&f=y'})`, 
+                          backgroundSize: "cover", backgroundPosition: "center" 
+                        }}
+                      ></div>
 
-                    <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                      <span style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {vote.profiles.nickname}
-                      </span>
-                      <div style={{ color: "#fbbf24", fontSize: "13px", letterSpacing: "1px", textShadow: "0 1px 1px rgba(0,0,0,0.2)" }}>
-                        {"★".repeat(Math.floor(vote.rating))}
-                        {vote.rating % 1 !== 0 ? "½" : ""}
-                        <span style={{ color: "#ccc" }}>{"★".repeat(5 - Math.ceil(vote.rating))}</span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, overflow: "hidden" }}>
+                        <span style={{ 
+                          fontWeight: "bold", fontSize: "15px", 
+                          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" 
+                        }}>
+                          {vote.profiles.nickname}
+                        </span>
+                        
+                        <div style={{ color: "#fbbf24", fontSize: "13px", letterSpacing: "1px", textShadow: "0 1px 1px rgba(0,0,0,0.2)" }}>
+                          {"★".repeat(Math.floor(vote.rating))}
+                          {vote.rating % 1 !== 0 ? "½" : ""}
+                          <span style={{ color: "#ccc" }}>{"★".repeat(5 - Math.ceil(vote.rating))}</span>
+                        </div>
                       </div>
+
                     </div>
                   </div>
                 ))
