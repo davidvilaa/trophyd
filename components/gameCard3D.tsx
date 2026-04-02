@@ -313,7 +313,8 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
         .upsert({
           id: juego.id,
           title: juego.titulo,
-          cover_image_url: juego.portada || null
+          cover_image_url: juego.portada || null,
+          platforms: juego.todasLasConsolas || null
         }, { onConflict: 'id' });
 
       if (errorGame) {

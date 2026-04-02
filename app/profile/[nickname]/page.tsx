@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Clock, Dumbbell, Award, X } from "lucide-react";
+import { Clock, Dumbbell, Award, X, MoveLeft, MoveRight } from "lucide-react";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
@@ -24,6 +24,7 @@ export default function ProfileContentPage() {
 
   const mainRef = useRef<HTMLDivElement>(null!);
   const [focusedGame, setFocusedGame] = useState<any | null>(null);
+  const [consolaFocus, setConsolaFocus] = useState<string | null>("pc");
   const [isLogging, setIsLogging] = useState(false);
   const [notificacion, setNotificacion] = useState<{ titulo: string, mensaje: string } | null>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -96,7 +97,8 @@ export default function ProfileContentPage() {
           platform,
           games (
             title,
-            cover_image_url
+            cover_image_url,
+            platforms
           )
         `)
         .eq("user_id", targetUserId)
@@ -311,7 +313,8 @@ export default function ProfileContentPage() {
                       id: fav.game_id,
                       titulo: fav.games.title,
                       portada: fav.games.cover_image_url,
-                      platform: fav.platform
+                      platform: fav.platform,
+                      todasLasConsolas: fav.games.platforms
                     });
                     setIsLogging(true);
                   }
@@ -357,11 +360,12 @@ export default function ProfileContentPage() {
           <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 105 }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
-              consola={focusedGame.platform || "pc"}
+              consola={consolaFocus}
               isFocused={true} 
               isLogging={isLogging}
               juego={focusedGame} 
               userId={currentUserId}
+              onPlatformFetched={(plat) => setConsolaFocus(plat)}
               onSaveSuccess={(action) => {
                 setIsLogging(false); 
                 setFocusedGame(null);
@@ -379,6 +383,47 @@ export default function ProfileContentPage() {
 
           <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px", position: "relative" }}>
             <div className="window-body" style={{ display: "flex", gap: "15px", alignItems: "center", margin: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <button 
+                  onClick={() => {
+                    const consolas = focusedGame.todasLasConsolas?.length > 0 ? focusedGame.todasLasConsolas : ["pc"];
+                    const index = consolas.indexOf(consolaFocus || "pc");
+                    const prevIndex = index <= 0 ? consolas.length - 1 : index - 1;
+                    setConsolaFocus(consolas[prevIndex]);
+                  }}
+                  style={{ minWidth: "30px", cursor: "pointer", padding: "2px" }}
+                >
+                  <MoveLeft size={18} />
+                </button>
+
+                <select 
+                  value={consolaFocus || "pc"} 
+                  onChange={(e) => setConsolaFocus(e.target.value)}
+                  style={{ minWidth: "160px", cursor: "pointer", padding: "3px" }}
+                >
+                  {focusedGame.todasLasConsolas && focusedGame.todasLasConsolas.length > 0 ? (
+                    focusedGame.todasLasConsolas.map((c: string) => (
+                      <option key={c} value={c}>
+                        {c.toUpperCase()}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="pc">PC</option>
+                  )}
+                </select>
+
+                <button 
+                  onClick={() => {
+                    const consolas = focusedGame.todasLasConsolas?.length > 0 ? focusedGame.todasLasConsolas : ["pc"];
+                    const index = consolas.indexOf(consolaFocus || "pc");
+                    const nextIndex = index >= consolas.length - 1 ? 0 : index + 1;
+                    setConsolaFocus(consolas[nextIndex]);
+                  }}
+                  style={{ minWidth: "30px", cursor: "pointer", padding: "2px" }}
+                >
+                  <MoveRight size={18} />
+                </button>
+              </div>
               <button 
                 onClick={() => setIsLogging(!isLogging)}
                 style={{ fontWeight: "bold", padding: "5px 15px", cursor: "pointer" }}
