@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
-import { MoveLeft, MoveRight, X } from "lucide-react";
+import { MoveLeft, MoveRight, X, Share } from "lucide-react";
 
 export default function BusquedaPage() {
   const searchParams = useSearchParams();
@@ -34,6 +34,10 @@ export default function BusquedaPage() {
 
   const [notificacion, setNotificacion] = useState<{ titulo: string, mensaje: string } | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+
+  const [infoPos, setInfoPos] = useState({ x: 0, y: 0 });
+  const [draggingInfo, setDraggingInfo] = useState(false);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
     const comprobarSesion = async () => {
@@ -367,6 +371,89 @@ export default function BusquedaPage() {
               </button>
 
             </div>
+          </div>
+          <div 
+            className="info-float-god window" 
+            style={{ 
+              position: "fixed", 
+              top: `calc(50vh + ${infoPos.y}px)`, 
+              left: `calc(15% + ${infoPos.x}px)`, 
+              width: "42px", height: "42px", 
+              minWidth: "42px", minHeight: "42px", 
+              padding: 0, 
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(6px)",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              borderTopColor: "rgba(255, 255, 255, 0.6)",
+              borderRadius: "4px",
+              boxShadow: "0 4px 15px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.7)",
+              zIndex: 110, 
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: draggingInfo ? "grabbing" : "grab",
+              overflow: "hidden", 
+              transform: "translate(-50%, -50%)", 
+              transition: draggingInfo ? "none" : "box-shadow 0.2s ease"
+            }}
+            onPointerDown={(e) => { 
+              e.preventDefault();
+              setDraggingInfo(true); 
+              isDraggingRef.current = false;
+              
+              const startClientX = e.clientX;
+              const startClientY = e.clientY;
+              const startInfoX = infoPos.x;
+              const startInfoY = infoPos.y;
+
+              const handleMove = (moveEvent: PointerEvent) => {
+                isDraggingRef.current = true;
+                setInfoPos({
+                  x: startInfoX + (moveEvent.clientX - startClientX),
+                  y: startInfoY + (moveEvent.clientY - startClientY)
+                });
+              };
+              
+              const handleUp = () => {
+                setDraggingInfo(false);
+                window.removeEventListener("pointermove", handleMove);
+                window.removeEventListener("pointerup", handleUp);
+                setTimeout(() => { isDraggingRef.current = false; }, 50);
+              };
+              
+              window.addEventListener("pointermove", handleMove);
+              window.addEventListener("pointerup", handleUp);
+            }}
+            onPointerOver={(e) => {
+              e.currentTarget.style.boxShadow = "0 8px 25px rgba(251, 191, 36, 0.7), inset 0 1px 1px rgba(255,255,255,0.8)";
+              e.currentTarget.style.borderTopColor = "rgba(251, 191, 36, 0.8)";
+            }}
+            onPointerOut={(e) => {
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.7)";
+              e.currentTarget.style.borderTopColor = "rgba(255, 255, 255, 0.6)";
+            }}
+          >
+            <button 
+              onClick={(e) => {
+                if (isDraggingRef.current) return;
+                router.push(`/game/${focusedGame.id}`);
+              }} 
+              style={{ 
+                background: "transparent", border: "none", boxShadow: "none",
+                color: "#1a1a2e", padding: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                width: "100%", height: "100%", cursor: draggingInfo ? "grabbing" : "pointer",
+                margin: 0, 
+              }}
+              title="Descubrir la Ficha Técnica"
+            >
+              <style>{`
+                .info-float-god:hover .rotate-icon {
+                  transform: rotate(360deg) scale(1.1);
+                  color: #fbbf24; 
+                }
+              `}</style>
+              <div className="rotate-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.4s ease, color 0.4s ease", pointerEvents: "none" }}>
+                <Share size={24} strokeWidth={3} filter="drop-shadow(0 1px 2px rgba(0,0,0,0.8))" />
+              </div>
+            </button>
           </div>
         </div>
       )}
