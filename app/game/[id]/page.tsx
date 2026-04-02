@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Clock, Dumbbell } from "lucide-react";
 
 export default function GamePage() {
   const params = useParams();
+  const router = useRouter();
   const gameId = params.id as string;
 
   const [loading, setLoading] = useState(true);
@@ -28,6 +29,8 @@ export default function GamePage() {
   });
 
   const [guides, setGuides] = useState<any[]>([]);
+
+  const [followingVotes, setFollowingVotes] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchGameInfo = async () => {
@@ -113,9 +116,64 @@ export default function GamePage() {
       }
     };
 
+    const fetchFollowingVotes = async () => {
+      if (!gameId) return;
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
+        
+        if (!user) {
+          console.log("No hay sesión de usuario activa");
+          return;
+        }
+
+        const { data: follows, error: followError } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", user.id);
+
+        if (followError) {
+          console.error("Error en tabla follows:", followError.message);
+          return;
+        }
+
+        if (!follows || follows.length === 0) {
+          setFollowingVotes([]);
+          return;
+        }
+
+        const followingIds = follows.map(f => f.following_id);
+
+        const { data: votes, error: voteError } = await supabase
+          .from("user_games")
+          .select(`
+            rating,
+            profiles!user_id (
+              id,
+              nickname,
+              pfp_url
+            )
+          `)
+          .eq("game_id", Number(gameId)) 
+          .in("user_id", followingIds);
+
+        if (voteError) {
+          console.error("Error en query user_games:", voteError.message);
+          return;
+        }
+
+        setFollowingVotes(votes || []);
+
+      } catch (error: any) {
+        console.error("Error catastrófico en Following:", error.message || error);
+      }
+    };
+
     fetchGameInfo();
     fetchGameStats();
     fetchGuides();
+    fetchFollowingVotes();
   }, [gameId]);
 
   if (loading) return <div style={{ padding: "50px", textAlign: "center" }}>Cargando datos del juego...</div>;
@@ -401,20 +459,45 @@ export default function GamePage() {
         </div>
 
         <div style={{ width: "260px", flexShrink: 0, marginTop: "100px" }}>
-          <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc" }}>
+          <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", minHeight: "200px" }}>
             <legend style={{ fontSize: "16px", padding: "0 5px" }}>Following</legend>
+            
             <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-              
-              {[1, 2, 3].map((user) => (
-                <div key={user} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "40px", height: "40px", backgroundColor: "#ccc", border: "2px inset #fff" }}></div>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: "14px", fontWeight: "bold" }}>Usuario {user}</span>
-                    <span style={{ color: "#fbbf24", fontSize: "12px", textShadow: "0 0 1px rgba(0,0,0,0.5)" }}>★ ★ ★ ☆ ☆</span>
-                  </div>
-                </div>
-              ))}
+              {followingVotes.length > 0 ? (
+                followingVotes.map((vote, index) => (
+                  <div 
+                    key={index} 
+                    onClick={() => router.push(`/profile/${vote.profiles.nickname}`)}
+                    style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
+                  >
+                    <div style={{ 
+                      width: "40px", height: "40px", backgroundColor: "#eee", 
+                      border: "2px inset #fff", overflow: "hidden", flexShrink: 0 
+                    }}>
+                      {vote.profiles.avatar_url ? (
+                        <img src={vote.profiles.avatar_url} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>👤</div>
+                      )}
+                    </div>
 
+                    <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                      <span style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {vote.profiles.nickname}
+                      </span>
+                      <div style={{ color: "#fbbf24", fontSize: "13px", letterSpacing: "1px", textShadow: "0 1px 1px rgba(0,0,0,0.2)" }}>
+                        {"★".repeat(Math.floor(vote.rating))}
+                        {vote.rating % 1 !== 0 ? "½" : ""}
+                        <span style={{ color: "#ccc" }}>{"★".repeat(5 - Math.ceil(vote.rating))}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: "center", padding: "20px 10px", color: "#888", fontSize: "13px" }}>
+                  Ninguno de tus amigos ha logueado este juego todavía.
+                </div>
+              )}
             </div>
           </fieldset>
         </div>
