@@ -17,8 +17,14 @@ export default function GamePage() {
     summary: "Cargando información del juego...",
   });
 
-  const distribucionNotas = { 1: 2, 2: 5, 3: 15, 4: 25, 5: 10 };
-  const distribucionDificultad = { 2: 1, 4: 5, 6: 20, 8: 15, 10: 2 };
+  const [stats, setStats] = useState({
+    avgRating: 0,
+    avgDifficulty: 0,
+    distRating: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as Record<number, number>,
+    distDiff: { 2: 0, 4: 0, 6: 0, 8: 0, 10: 0 } as Record<number, number>,
+    maxRatingCount: 1,
+    maxDiffCount: 1
+  });
 
   useEffect(() => {
     const fetchGameInfo = async () => {
@@ -40,7 +46,52 @@ export default function GamePage() {
       }
     };
 
+    const fetchGameStats = async () => {
+      if (!gameId) return;
+      try {
+        const { data, error } = await supabase
+          .from("user_games")
+          .select("rating, difficulty")
+          .eq("game_id", gameId);
+
+        if (data && data.length > 0) {
+          let rSum = 0, rCount = 0;
+          let dSum = 0, dCount = 0;
+          
+          const rDist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+          const dDist: Record<number, number> = { 2: 0, 4: 0, 6: 0, 8: 0, 10: 0 };
+
+          data.forEach(row => {
+            if (row.rating > 0) {
+              rSum += Number(row.rating);
+              rCount++;
+              const rBucket = Math.ceil(Number(row.rating)); 
+              if (rDist[rBucket] !== undefined) rDist[rBucket]++;
+            }
+            if (row.difficulty > 0) {
+              dSum += Number(row.difficulty);
+              dCount++;
+              const dBucket = Math.ceil(Number(row.difficulty) / 2) * 2; 
+              if (dDist[dBucket] !== undefined) dDist[dBucket]++;
+            }
+          });
+
+          setStats({
+            avgRating: rCount > 0 ? Number((rSum / rCount).toFixed(1)) : 0,
+            avgDifficulty: dCount > 0 ? Number((dSum / dCount).toFixed(1)) : 0,
+            distRating: rDist,
+            distDiff: dDist,
+            maxRatingCount: Math.max(...Object.values(rDist), 1),
+            maxDiffCount: Math.max(...Object.values(dDist), 1),
+          });
+        }
+      } catch (error) {
+        console.error("Error obteniendo stats de Supabase:", error);
+      }
+    };
+
     fetchGameInfo();
+    fetchGameStats();
   }, [gameId]);
 
   if (loading) return <div style={{ padding: "50px", textAlign: "center" }}>Cargando datos del juego...</div>;
@@ -84,24 +135,50 @@ export default function GamePage() {
               </div>
             )}
           </div>
+
         <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", display: "flex", flexDirection: "column", gap: "15px" }}>
-            <legend style={{ fontSize: "16px", padding: "0 5px" }}>Ratings</legend>
-            
+            <legend style={{ fontSize: "16px", padding: "0 5px" }}>Community Stats</legend>
             <div>
-              <div style={{ fontSize: "13px", marginBottom: "5px" }}>nota media: 3.9</div>
-              <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc" }}>
-                {Object.entries(distribucionNotas).map(([nota, count]) => (
-                  <div key={nota} style={{ flex: 1, backgroundColor: "#2e7d32", height: `${(count / 25) * 100}%`, transition: "height 0.3s" }} title={`${nota}★: ${count} votos`}></div>
-                ))}
+              <div style={{ fontSize: "13px", marginBottom: "5px", display: "flex", justifyContent: "space-between" }}>
+                <span>Nota media:</span>
+                <span style={{ fontWeight: "bold" }}>{stats.avgRating > 0 ? `${stats.avgRating} ★` : "--"}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
+                {Object.entries(stats.distRating).map(([nota, count]) => {
+                  const altura = stats.maxRatingCount > 0 ? (count / stats.maxRatingCount) * 100 : 0;
+                  return (
+                    <div 
+                      key={nota} 
+                      style={{ flex: 1, backgroundColor: "#2e7d32", height: `${Math.max(altura, 2)}%`, transition: "height 0.5s ease-out" }} 
+                      title={`${nota}★: ${count} votos`}
+                    ></div>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "2px" }}>
+                <span>1★</span><span>5★</span>
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: "13px", marginBottom: "5px" }}>dificultad media: 7/10</div>
-              <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc" }}>
-                {Object.entries(distribucionDificultad).map(([diff, count]) => (
-                  <div key={diff} style={{ flex: 1, backgroundColor: "#2e7d32", height: `${(count / 20) * 100}%`, transition: "height 0.3s" }} title={`Dificultad ${diff}: ${count} votos`}></div>
-                ))}
+              <div style={{ fontSize: "13px", marginBottom: "5px", display: "flex", justifyContent: "space-between" }}>
+                <span>Dificultad media:</span>
+                <span style={{ fontWeight: "bold" }}>{stats.avgDifficulty > 0 ? `${stats.avgDifficulty}/10` : "--"}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
+                {Object.entries(stats.distDiff).map(([diff, count]) => {
+                  const altura = stats.maxDiffCount > 0 ? (count / stats.maxDiffCount) * 100 : 0;
+                  return (
+                    <div 
+                      key={diff} 
+                      style={{ flex: 1, backgroundColor: "#b91c1c", height: `${Math.max(altura, 2)}%`, transition: "height 0.5s ease-out" }} 
+                      title={`Dificultad ${diff}/10: ${count} votos`}
+                    ></div>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "2px" }}>
+                <span>Fácil</span><span>Duro</span>
               </div>
             </div>
           </fieldset>
