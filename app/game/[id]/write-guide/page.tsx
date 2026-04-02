@@ -4,32 +4,31 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Save, Image as ImageIcon, BookOpen, ListChecks, Plus, Trash2, ArrowLeft, Settings, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export default function WriteGuidePage() {
   const params = useParams();
   const router = useRouter();
   const gameId = params.id as string;
 
-  // --- ESTADOS DE LA PÁGINA Y EL JUEGO ---
   const [loadingGame, setLoadingGame] = useState(true);
   const [gameData, setGameData] = useState<any>({ title: "Cargando...", banner_url: "" });
   
-  // --- ESTADOS DEL EDITOR ---
   const [activeTab, setActiveTab] = useState<"def" | "guide" | "checklist">("def");
   const [isSaving, setIsSaving] = useState(false);
   const [existingGuideId, setExistingGuideId] = useState<string | null>(null);
 
-  // 1. Info General y Portada (Fusionados en "Definición")
   const [guideInfo, setGuideInfo] = useState({ title: "", average_time: "", average_difficulty: 1 });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
-  // 2. Secciones de la Guía y Checklists
+  const searchParams = useSearchParams();
+  const guideIdFromUrl = searchParams.get("guideId");
+
   const [sections, setSections] = useState([
     { id: Date.now().toString(), title: "Introducción", text: "", checklists: [{ id: Date.now().toString() + "c", text: "" }] }
   ]);
 
-  // --- FETCH DEL BANNER DEL JUEGO ---
   useEffect(() => {
     const fetchGame = async () => {
       try {
@@ -48,7 +47,49 @@ export default function WriteGuidePage() {
     if (gameId) fetchGame();
   }, [gameId]);
 
-  // --- MANEJO DE SECCIONES Y CHECKLISTS (Misma lógica, ni la tocamos) ---
+  useEffect(() => {
+    const loadExistingGuide = async () => {
+      if (!guideIdFromUrl) return;
+      
+      const { data: guide } = await supabase
+        .from("guides")
+        .select("*")
+        .eq("id", guideIdFromUrl)
+        .single();
+
+      if (guide) {
+        setExistingGuideId(guide.id);
+        setGuideInfo({
+          title: guide.title,
+          average_time: guide.average_time || "",
+          average_difficulty: guide.average_difficulty
+        });
+        if (guide.cover_url) setCoverPreview(guide.cover_url);
+        
+        const { data: sectionsData } = await supabase
+          .from("guide_sections")
+          .select(`
+            id, title, text,
+            checklist (id, text)
+          `)
+          .eq("guide_id", guide.id)
+          .order("created_at", { ascending: true });
+
+        if (sectionsData) {
+          const formatted = sectionsData.map(s => ({
+            id: s.id,
+            title: s.title,
+            text: s.text,
+            checklists: s.checklist || []
+          }));
+          setSections(formatted);
+        }
+      }
+    };
+
+    loadExistingGuide();
+  }, [guideIdFromUrl]);
+
   const addSection = () => setSections([...sections, { id: Date.now().toString(), title: "", text: "", checklists: [] }]);
   const updateSection = (id: string, field: "title" | "text", value: string) => setSections(sections.map(s => s.id === id ? { ...s, [field]: value } : s));
   const removeSection = (id: string) => { if (sections.length > 1) setSections(sections.filter(s => s.id !== id)); };
@@ -56,7 +97,6 @@ export default function WriteGuidePage() {
   const updateChecklist = (sectionId: string, checklistId: string, text: string) => setSections(sections.map(s => s.id === sectionId ? { ...s, checklists: s.checklists.map(c => c.id === checklistId ? { ...c, text } : c) } : s));
   const removeChecklist = (sectionId: string, checklistId: string) => setSections(sections.map(s => s.id === sectionId ? { ...s, checklists: s.checklists.filter(c => c.id !== checklistId) } : s));
 
-  // --- MANEJO DE IMAGEN ---
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -65,7 +105,6 @@ export default function WriteGuidePage() {
     }
   };
 
-  // --- GUARDADO ---
   const handleSave = async () => {
     if (!guideInfo.title) return alert("¡Ponle un título a la guía primero!");
     setIsSaving(true);
@@ -119,7 +158,6 @@ export default function WriteGuidePage() {
   return (
     <main style={{ minHeight: "100vh", backgroundColor: "#f3f4f6", paddingBottom: "50px" }}>
       
-      {/* 1. BANNER GIGANTE */}
       <div style={{ 
         width: "100%", height: "350px", backgroundColor: "#d1d5db",
         backgroundImage: gameData.banner_url ? `url(${gameData.banner_url})` : "none",
@@ -128,10 +166,8 @@ export default function WriteGuidePage() {
         {!gameData.banner_url && !loadingGame && <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "4rem" }}>🖼️</div>}
       </div>
 
-      {/* 2. CONTENEDOR PRINCIPAL SUPERPUESTO */}
       <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 20px", position: "relative", top: "-80px", display: "flex", flexDirection: "column", gap: "15px" }}>
         
-        {/* BARRA SUPERIOR: Botones de Acción */}
         <div className="window" style={{ padding: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <button className="default aero-btn-list" onClick={() => router.push(`/game/${gameId}`)} style={{ padding: "4px 8px" }}>
@@ -147,7 +183,6 @@ export default function WriteGuidePage() {
           </button>
         </div>
 
-        {/* MENÚ DE PESTAÑAS (Estilo Windows 7.css) */}
         <menu role="tablist" style={{ margin: 0, padding: 0, display: "flex", gap: "2px" }}>
           <li role="tab" aria-selected={activeTab === "def"} onClick={() => setActiveTab("def")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
             <a style={{ display: "flex", alignItems: "center", gap: "5px" }}><Settings size={14}/> Definición</a>
@@ -160,14 +195,11 @@ export default function WriteGuidePage() {
           </li>
         </menu>
 
-        {/* VENTANA DEL EDITOR */}
         <div className="window" style={{ margin: 0 }}>
           <div className="window-body" style={{ minHeight: "500px", padding: "25px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "20px" }}>
             
-            {/* --- PESTAÑA: DEFINICIÓN --- */}
             {activeTab === "def" && (
               <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
-                {/* Columna Izquierda: Portada */}
                 <fieldset style={{ width: "250px", padding: "15px", display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", flexShrink: 0 }}>
                   <legend>Portada de la Guía</legend>
                   <div style={{ width: "100%", aspectRatio: "3/4", border: "2px dashed #94a3b8", backgroundColor: "#f8fafc", position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -188,7 +220,6 @@ export default function WriteGuidePage() {
                   </div>
                 </fieldset>
 
-                {/* Columna Derecha: Datos */}
                 <fieldset style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
                   <legend>Información Principal</legend>
                   <div className="field-row-stacked">
@@ -209,7 +240,6 @@ export default function WriteGuidePage() {
               </div>
             )}
 
-            {/* --- PESTAÑA: ESCRITURA --- */}
             {activeTab === "guide" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
                 {sections.map((sec, index) => (
@@ -237,7 +267,6 @@ export default function WriteGuidePage() {
               </div>
             )}
 
-            {/* --- PESTAÑA: CHECKLIST --- */}
             {activeTab === "checklist" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 <div style={{ backgroundColor: "#e0f2fe", border: "1px solid #bae6fd", padding: "10px", borderRadius: "4px", fontSize: "13px", color: "#0369a1" }}>
@@ -266,10 +295,8 @@ export default function WriteGuidePage() {
                 ))}
               </div>
             )}
-
           </div>
         </div>
-
       </div>
     </main>
   );

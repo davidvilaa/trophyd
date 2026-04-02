@@ -37,6 +37,8 @@ export default function GamePage() {
 
   const [followingVotes, setFollowingVotes] = useState<any[]>([]);
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchGameInfo = async () => {
       if (!gameId) return;
@@ -101,25 +103,26 @@ export default function GamePage() {
     };
 
     const fetchGuides = async () => {
-      if (!gameId) return;
-      try {
-        const { data, error } = await supabase
-          .from("guides")
-          .select(`
-            id, 
-            title, 
-            average_time, 
-            average_difficulty, 
-            profiles (nickname)
-          `)
-          .eq("game_id", gameId)
-          .order("created_at", { ascending: false });
+    if (!gameId) return;
+    try {
+      const { data } = await supabase
+        .from("guides")
+        .select(`
+          id, 
+          title, 
+          average_time, 
+          average_difficulty, 
+          user_id, 
+          profiles (nickname)
+        `)
+        .eq("game_id", gameId)
+        .order("created_at", { ascending: false });
 
-        if (data) setGuides(data);
-      } catch (error) {
-        console.error("Error obteniendo guías:", error);
-      }
-    };
+      if (data) setGuides(data);
+    } catch (error) {
+      console.error("Error obteniendo guías:", error);
+    }
+  };
 
     const fetchFollowingVotes = async () => {
       if (!gameId) return;
@@ -175,6 +178,12 @@ export default function GamePage() {
       }
     };
 
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) setCurrentUserId(session.user.id);
+    };
+    
+    getSession();
     fetchGameInfo();
     fetchGameStats();
     fetchGuides();
@@ -406,7 +415,17 @@ export default function GamePage() {
             {guides.length > 0 ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
                 {guides.map((guia) => (
-                  <div key={guia.id} className="guide-case-container" title={guia.title}>
+                  <div 
+                    key={guia.id} 
+                    className="guide-case-container" 
+                    title={guia.title}
+                    onClick={() => {
+                      if (currentUserId === guia.user_id) {
+                        router.push(`/game/${gameId}/write-guide?guideId=${guia.id}`);
+                      } else {
+                        router.push(`/game/${gameId}/guide/${guia.id}`);
+                      }
+                    }}>
                     <div 
                       className="guide-case" 
                       style={{ backgroundImage: `url(${gameData.cover_image_url})` }}
