@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Clock, Dumbbell } from "lucide-react";
 
 export default function GamePage() {
   const params = useParams();
@@ -20,11 +21,13 @@ export default function GamePage() {
   const [stats, setStats] = useState({
     avgRating: 0,
     avgDifficulty: 0,
-    distRating: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as Record<number, number>,
-    distDiff: { 2: 0, 4: 0, 6: 0, 8: 0, 10: 0 } as Record<number, number>,
+    distRating: { 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 } as Record<number, number>,
+    distDiff: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 } as Record<number, number>,
     maxRatingCount: 1,
     maxDiffCount: 1
   });
+
+  const [guides, setGuides] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchGameInfo = async () => {
@@ -58,20 +61,19 @@ export default function GamePage() {
           let rSum = 0, rCount = 0;
           let dSum = 0, dCount = 0;
           
-          const rDist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-          const dDist: Record<number, number> = { 2: 0, 4: 0, 6: 0, 8: 0, 10: 0 };
-
+          const rDist: Record<number, number> = { 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 };
+          const dDist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 };
           data.forEach(row => {
             if (row.rating > 0) {
               rSum += Number(row.rating);
               rCount++;
-              const rBucket = Math.ceil(Number(row.rating)); 
+              const rBucket = Math.round(Number(row.rating) * 2) / 2; 
               if (rDist[rBucket] !== undefined) rDist[rBucket]++;
             }
             if (row.difficulty > 0) {
               dSum += Number(row.difficulty);
               dCount++;
-              const dBucket = Math.ceil(Number(row.difficulty) / 2) * 2; 
+              const dBucket = Math.round(Number(row.difficulty)); 
               if (dDist[dBucket] !== undefined) dDist[dBucket]++;
             }
           });
@@ -90,11 +92,36 @@ export default function GamePage() {
       }
     };
 
+    const fetchGuides = async () => {
+      if (!gameId) return;
+      try {
+        const { data, error } = await supabase
+          .from("guides")
+          .select(`
+            id, 
+            title, 
+            average_time, 
+            average_difficulty, 
+            profiles (nickname)
+          `)
+          .eq("game_id", gameId)
+          .order("created_at", { ascending: false });
+
+        if (data) setGuides(data);
+      } catch (error) {
+        console.error("Error obteniendo guías:", error);
+      }
+    };
+
     fetchGameInfo();
     fetchGameStats();
+    fetchGuides();
   }, [gameId]);
 
   if (loading) return <div style={{ padding: "50px", textAlign: "center" }}>Cargando datos del juego...</div>;
+
+  const escalasRating = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+  const escalasDiff = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   return (
     <main style={{ minHeight: "100vh", backgroundColor: "#f3f4f6", paddingBottom: "50px" }}>
@@ -138,18 +165,40 @@ export default function GamePage() {
 
         <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", display: "flex", flexDirection: "column", gap: "15px" }}>
             <legend style={{ fontSize: "16px", padding: "0 5px" }}>Community Stats</legend>
+            
+            <style>{`
+              .stat-bar {
+                transition: height 0.5s ease-out, background-color 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+                cursor: pointer;
+                position: relative;
+                transform-origin: bottom;
+              }
+              .stat-bar:hover {
+                transform: scaleX(1.15) scaleY(1.1);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 10;
+              }
+              .stat-bar.rating { background-color: #81c784; }
+              .stat-bar.rating:hover { background-color: #2e7d32; }
+              .stat-bar.diff { background-color: #e57373; }
+              .stat-bar.diff:hover { background-color: #b91c1c; }
+            `}</style>
+
             <div>
               <div style={{ fontSize: "13px", marginBottom: "5px", display: "flex", justifyContent: "space-between" }}>
                 <span>Nota media:</span>
                 <span style={{ fontWeight: "bold" }}>{stats.avgRating > 0 ? `${stats.avgRating} ★` : "--"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
-                {Object.entries(stats.distRating).map(([nota, count]) => {
+                {escalasRating.map((nota) => {
+                  const count = stats.distRating[nota] || 0;
                   const altura = stats.maxRatingCount > 0 ? (count / stats.maxRatingCount) * 100 : 0;
                   return (
                     <div 
                       key={nota} 
-                      style={{ flex: 1, backgroundColor: "#2e7d32", height: `${Math.max(altura, 2)}%`, transition: "height 0.5s ease-out" }} 
+                      className="stat-bar rating"
+                      onClick={() => console.log(`Futuro filtro de usuarios por nota: ${nota}`)}
+                      style={{ flex: 1, height: `${Math.max(altura, 2)}%` }} 
                       title={`${nota}★: ${count} votos`}
                     ></div>
                   );
@@ -166,19 +215,22 @@ export default function GamePage() {
                 <span style={{ fontWeight: "bold" }}>{stats.avgDifficulty > 0 ? `${stats.avgDifficulty}/10` : "--"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
-                {Object.entries(stats.distDiff).map(([diff, count]) => {
+                {escalasDiff.map((diff) => {
+                  const count = stats.distDiff[diff] || 0;
                   const altura = stats.maxDiffCount > 0 ? (count / stats.maxDiffCount) * 100 : 0;
                   return (
                     <div 
                       key={diff} 
-                      style={{ flex: 1, backgroundColor: "#b91c1c", height: `${Math.max(altura, 2)}%`, transition: "height 0.5s ease-out" }} 
+                      className="stat-bar diff"
+                      onClick={() => console.log(`Futuro filtro de usuarios por dificultad: ${diff}`)}
+                      style={{ flex: 1, height: `${Math.max(altura, 2)}%` }} 
                       title={`Dificultad ${diff}/10: ${count} votos`}
                     ></div>
                   );
                 })}
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "2px" }}>
-                <span>Fácil</span><span>Duro</span>
+                <span>1</span><span>10</span>
               </div>
             </div>
           </fieldset>
@@ -192,15 +244,159 @@ export default function GamePage() {
             </p>
           </div>
 
-          <fieldset style={{ padding: "20px", backgroundColor: "#fff", border: "1px solid #ccc" }}>
-            <legend style={{ fontSize: "16px", padding: "0 5px" }}>Guides</legend>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "15px" }}>
-              {[1, 2, 3].map((guia) => (
-                <div key={guia} style={{ aspectRatio: "1/1", backgroundColor: "#e5e7eb", border: "2px inset #fff", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: "2rem" }}>
-                  🖼️
-                </div>
-              ))}
+          <fieldset style={{ padding: "20px", backgroundColor: "#fff", border: "1px solid #ccc", minHeight: "250px" }}>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
+              <legend style={{ fontSize: "18px", padding: "0 5px", margin: 0 }}>
+                Guías de la Comunidad ({guides.length})
+              </legend>
+              <button 
+                onClick={() => console.log("Próximamente: Redirigir al creador de guías")}
+                style={{ padding: "4px 10px", cursor: "pointer" }}
+              >
+                + Escribir Guía
+              </button>
             </div>
+
+            <style>{`
+              .guide-case-container {
+                position: relative;
+                cursor: pointer;
+                perspective: 1000px;
+                aspect-ratio: 1/1; 
+                z-index: 1;
+              }
+
+              .guide-case {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                background-size: cover;
+                background-position: center;
+                border: 2px inset #fff;
+                background-color: #e5e7eb;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                transform-style: preserve-3d;
+                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+              }
+
+              .guide-case-container:hover {
+                z-index: 20;
+              }
+
+              .guide-case-container:hover .guide-case {
+                transform: rotateX(8deg) rotateY(-8deg) scale(1.1) translateZ(30px);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+              }
+
+              .guide-info-gradient {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0) 100%);
+                padding: 30px 10px 15px 10px;
+                color: white;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                transition: opacity 0.2s ease;
+              }
+
+              .guide-case-container:hover .guide-info-gradient {
+                opacity: 0.2; 
+              }
+
+              .guide-badges-area {
+                position: absolute;
+                bottom: 12px;
+                left: 50%;
+                transform: translateX(-50%) translateZ(50px);
+                width: 110%;
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                gap: 5px;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                transform-style: preserve-3d;
+              }
+
+              .guide-case-container:hover .guide-badges-area {
+                opacity: 1;
+              }
+
+              .embedded-badge {
+                flex: 1 1 0%; 
+                justify-content: center;
+                background-color: rgba(20, 30, 40, 0.5); 
+                background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-top-color: rgba(255, 255, 255, 0.7);
+                border-bottom-color: rgba(0, 0, 0, 0.8);
+                border-radius: 6px;
+                color: #fff;
+                padding: 3px 4px;
+                font-size: 11px;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -1px 3px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.6);
+                text-transform: capitalize;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+              }
+
+              .embedded-badge svg {
+                stroke-width: 2.5px;
+                color: #fff;
+                flex-shrink: 0;
+                filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
+              }
+            `}</style>
+
+            {guides.length > 0 ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
+                {guides.map((guia) => (
+                  <div key={guia.id} className="guide-case-container" title={guia.title}>
+                    <div 
+                      className="guide-case" 
+                      style={{ backgroundImage: `url(${gameData.cover_image_url})` }}
+                    >
+                      <div className="guide-info-gradient">
+                        <div style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.title}>
+                          {guia.title}
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#ddd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          Por: {guia.profiles?.nickname || "Desconocido"}
+                        </div>
+                      </div>
+
+                      <div className="guide-badges-area">
+                        <div className="embedded-badge" title="Dificultad">
+                          <Dumbbell size={16} />
+                          <span>{guia.average_difficulty ? `${guia.average_difficulty}/10` : "--/10"}</span>
+                        </div>
+                        <div className="embedded-badge" title="Tiempo">
+                          <Clock size={16} />
+                          <span>{guia.average_time ? `${guia.average_time}h` : "--h"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "40px 20px", color: "#6b7280", display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
+                <p style={{ margin: 0 }}>Nadie ha escrito una guía para este juego todavía.</p>
+              </div>
+            )}
+
           </fieldset>
         </div>
 
