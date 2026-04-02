@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Clock, Dumbbell } from "lucide-react";
+import { Clock, Dumbbell, Award} from "lucide-react";
+import { Canvas } from "@react-three/fiber";
+import { PresentationControls, Environment, ContactShadows } from "@react-three/drei";
+import GameCard3D from "@/components/gameCard3D";
+import { View } from "@react-three/drei";
 
 export default function GamePage() {
   const params = useParams();
   const router = useRouter();
   const gameId = params.id as string;
+  const mainRef = useRef<HTMLElement>(null!);
 
   const [loading, setLoading] = useState(true);
   
@@ -182,7 +187,7 @@ export default function GamePage() {
   const escalasDiff = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   return (
-    <main style={{ minHeight: "100vh", backgroundColor: "#f3f4f6", paddingBottom: "50px" }}>
+    <main ref={mainRef} style={{ minHeight: "100vh", backgroundColor: "#f3f4f6", paddingBottom: "50px" }}>
       
       <div 
         style={{ 
@@ -207,20 +212,20 @@ export default function GamePage() {
       }}>
 
         <div style={{ width: "240px", flexShrink: 0, display: "flex", flexDirection: "column", gap: "20px" }}>
-          
-          <div style={{ 
-            width: "100%", aspectRatio: "3/4", backgroundColor: "#e5e7eb",
-            border: "4px solid #fff", borderRadius: "2px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-            backgroundImage: gameData.cover_image_url ? `url(${gameData.cover_image_url})` : "none",
-            backgroundSize: "cover", backgroundPosition: "center"
-          }}>
-            {!gameData.cover_image_url && (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: "3rem" }}>
-                🖼️
-              </div>
+          <div style={{ width: "100%", aspectRatio: "3/4", position: "relative", cursor: "pointer", zIndex: 10 }}>
+            {gameData.cover_image_url ? (
+              <GameCard3D
+                coverUrl={gameData.cover_image_url}
+                consola="pc" 
+                isFocused={false}
+                onClick={() => {
+                  console.log("¡Click en el 3D! Aquí abriremos el modal para loguear.");
+                }}
+              />
+            ) : (
+              <div style={{ width: "100%", height: "100%", border: "4px solid #fff", backgroundColor: "#ccc" }} />
             )}
           </div>
-
         <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", display: "flex", flexDirection: "column", gap: "15px" }}>
             <legend style={{ fontSize: "16px", padding: "0 5px" }}>Community Stats</legend>
             
@@ -306,7 +311,7 @@ export default function GamePage() {
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
               <legend style={{ fontSize: "18px", padding: "0 5px", margin: 0 }}>
-                Guías de la Comunidad ({guides.length})
+                Guías de la Comunidad
               </legend>
               <button 
                 onClick={() => console.log("Próximamente: Redirigir al creador de guías")}
@@ -487,6 +492,13 @@ export default function GamePage() {
           </fieldset>
         </div>
       </div>
+      <Canvas
+        eventSource={mainRef}
+        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 10 }}
+        camera={{ position: [0, 0, 22], fov: 20 }}
+      >
+        <View.Port />
+      </Canvas>
     </main>
   );
 }
