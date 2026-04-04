@@ -31,20 +31,23 @@ export default function WriteGuidePage() {
 
   useEffect(() => {
     const fetchGame = async () => {
+      if (!gameId) return;
+      setLoadingGame(true);
       try {
-        const { data, error } = await supabase
-          .from("games")
-          .select("title, banner_url")
-          .eq("id", gameId)
-          .single();
-        if (data) setGameData(data);
+        const res = await fetch(`/api/igdb/game?id=${gameId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setGameData(data);
+        } else {
+          console.error("Error al obtener datos del juego de IGDB");
+        }
       } catch (error) {
-        console.error("Error cargando el juego:", error);
+        console.error("Error de red:", error);
       } finally {
         setLoadingGame(false);
       }
     };
-    if (gameId) fetchGame();
+    fetchGame();
   }, [gameId]);
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export default function WriteGuidePage() {
         });
         if (guide.cover_url) setCoverPreview(guide.cover_url);
         
-        const { data: sectionsData } = await supabase
+        const { data: sectionsData, error: secError } = await supabase
           .from("guide_sections")
           .select(`
             id, title, text,
@@ -75,7 +78,9 @@ export default function WriteGuidePage() {
           .eq("guide_id", guide.id)
           .order("created_at", { ascending: true });
 
-        if (sectionsData) {
+        if (secError) console.error("Error al cargar las secciones:", secError);
+
+        if (sectionsData && sectionsData.length > 0) {
           const formatted = sectionsData.map(s => ({
             id: s.id,
             title: s.title,
@@ -166,37 +171,33 @@ export default function WriteGuidePage() {
         {!gameData.banner_url && !loadingGame && <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "4rem" }}>🖼️</div>}
       </div>
 
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 20px", position: "relative", top: "-80px", display: "flex", flexDirection: "column", gap: "15px" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 20px", position: "relative", top: "-80px", display: "flex", flexDirection: "column" }}>
         
-        <div className="window" style={{ padding: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button className="default aero-btn-list" onClick={() => router.push(`/game/${gameId}`)} style={{ padding: "4px 8px" }}>
-              <ArrowLeft size={16} /> Volver al Juego
-            </button>
-            <span style={{ fontWeight: "bold", fontSize: "16px", marginLeft: "10px" }}>Escribiendo guía para: <span style={{ color: "#3b82f6" }}>{gameData.title}</span></span>
-          </div>
-          <button 
-            className="default aero-btn-list" onClick={handleSave} disabled={isSaving}
-            style={{ padding: "6px 15px", fontWeight: "bold", backgroundColor: "#3b82f6", color: "white", display: "flex", alignItems: "center", gap: "6px" }}
-          >
-            <Save size={16} /> {isSaving ? "Guardando..." : (existingGuideId ? "Actualizar Guía" : "Publicar Guía")}
-          </button>
-        </div>
-
-        <menu role="tablist" style={{ margin: 0, padding: 0, display: "flex", gap: "2px" }}>
-          <li role="tab" aria-selected={activeTab === "def"} onClick={() => setActiveTab("def")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-            <a style={{ display: "flex", alignItems: "center", gap: "5px" }}><Settings size={14}/> Definición</a>
-          </li>
-          <li role="tab" aria-selected={activeTab === "guide"} onClick={() => setActiveTab("guide")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-            <a style={{ display: "flex", alignItems: "center", gap: "5px" }}><BookOpen size={14}/> Escritura</a>
-          </li>
-          <li role="tab" aria-selected={activeTab === "checklist"} onClick={() => setActiveTab("checklist")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-            <a style={{ display: "flex", alignItems: "center", gap: "5px" }}><ListChecks size={14}/> Checklist</a>
-          </li>
-        </menu>
-
         <div className="window" style={{ margin: 0 }}>
-          <div className="window-body" style={{ minHeight: "500px", padding: "25px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "20px" }}>
+          
+          <ul role="menubar" style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+            <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}`)} style={{ display: "flex", alignItems: "center", gap: "6px", borderRight: "1px solid #ccc", paddingRight: "10px", marginRight: "5px" }}>
+              <ArrowLeft size={14} /> Volver al Juego
+            </li>
+            
+            <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("def")} style={{ fontWeight: activeTab === "def" ? "bold" : "normal", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Settings size={14}/> Definición
+            </li>
+            
+            <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("guide")} style={{ fontWeight: activeTab === "guide" ? "bold" : "normal", display: "flex", alignItems: "center", gap: "6px" }}>
+              <BookOpen size={14}/> Escritura
+            </li>
+            
+            <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("checklist")} style={{ fontWeight: activeTab === "checklist" ? "bold" : "normal", display: "flex", alignItems: "center", gap: "6px" }}>
+              <ListChecks size={14}/> Checklist
+            </li>
+            
+            <li role="menuitem" tabIndex={0} onClick={handleSave} style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px", color: isSaving ? "#666" : "#0369a1", fontWeight: "bold" }}>
+              <Save size={14} /> {isSaving ? "Guardando..." : (existingGuideId ? "Actualizar Guía" : "Publicar Guía")}
+            </li>
+          </ul>
+
+          <div className="window-body" style={{ minHeight: "500px", padding: "25px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "20px", marginTop: 0 }}>
             
             {activeTab === "def" && (
               <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
