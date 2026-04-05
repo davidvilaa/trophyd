@@ -1,21 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Clock, Dumbbell } from "lucide-react";
 
 export default function ProfileGuidesPage() {
   const params = useParams();
+  const router = useRouter();
   const targetNickname = params.nickname as string;
 
   const [loading, setLoading] = useState(true);
   const [guides, setGuides] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const cargarGuias = async () => {
       setLoading(true);
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) setCurrentUserId(session.user.id);
+
         const { data: profile } = await supabase
           .from("profiles")
           .select("id")
@@ -26,7 +31,7 @@ export default function ProfileGuidesPage() {
 
         const { data: guidesData } = await supabase
           .from("guides")
-          .select(`id, title, average_time, average_difficulty, games (title, cover_image_url)`)
+          .select(`id, title, average_time, average_difficulty, cover_url, user_id, games (id, title, cover_image_url)`)
           .eq("user_id", profile.id)
           .order("created_at", { ascending: false });
 
@@ -164,10 +169,21 @@ export default function ProfileGuidesPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
         {guides.length > 0 ? (
           guides.map((guia) => (
-            <div key={guia.id} className="guide-case-container" title={guia.title}>
+            <div 
+            key={guia.id} 
+            className="guide-case-container" 
+            title={guia.title}
+            onClick={() => {
+              if (currentUserId === guia.user_id) {
+                router.push(`/game/${guia.games.id}/write-guide?guideId=${guia.id}`);
+              } else {
+                router.push(`/game/${guia.games.id}/guide/${guia.id}`);
+              }
+            }}
+          >
               <div 
                 className="guide-case" 
-                style={{ backgroundImage: `url(${guia.games.cover_image_url})` }}
+                style={{ backgroundImage: `url(${guia.cover_url || guia.games.cover_image_url})` }}
               >
                 <div className="guide-info-gradient">
                   <div style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.title}>{guia.title}</div>

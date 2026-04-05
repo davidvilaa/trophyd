@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Save, Image as ImageIcon, BookOpen, ListChecks, Plus, Trash2, ArrowLeft, Settings, X } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 
 export default function WriteGuidePage() {
   const params = useParams();
@@ -38,11 +37,9 @@ export default function WriteGuidePage() {
         if (res.ok) {
           const data = await res.json();
           setGameData(data);
-        } else {
-          console.error("Error al obtener datos del juego de IGDB");
         }
       } catch (error) {
-        console.error("Error de red:", error);
+        console.error(error);
       } finally {
         setLoadingGame(false);
       }
@@ -69,16 +66,11 @@ export default function WriteGuidePage() {
         });
         if (guide.cover_url) setCoverPreview(guide.cover_url);
         
-        const { data: sectionsData, error: secError } = await supabase
+        const { data: sectionsData } = await supabase
           .from("guide_sections")
-          .select(`
-            id, title, text,
-            checklist (id, text)
-          `)
+          .select(`id, title, text, checklist (id, text)`)
           .eq("guide_id", guide.id)
           .order("created_at", { ascending: true });
-
-        if (secError) console.error("Error al cargar las secciones:", secError);
 
         if (sectionsData && sectionsData.length > 0) {
           const formatted = sectionsData.map(s => ({
@@ -91,7 +83,6 @@ export default function WriteGuidePage() {
         }
       }
     };
-
     loadExistingGuide();
   }, [guideIdFromUrl]);
 
@@ -111,18 +102,17 @@ export default function WriteGuidePage() {
   };
 
   const handleSave = async () => {
-    if (!guideInfo.title) return alert("¡Ponle un título a la guía primero!");
+    if (!guideInfo.title) return alert("¡Ponle un título!");
     setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No estás logueado");
+      if (!user) return;
 
       let finalCoverUrl = null;
       if (coverFile) {
         const fileExt = coverFile.name.split('.').pop();
         const fileName = `${user.id}-${gameId}-${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from("guide_covers").upload(fileName, coverFile, { upsert: true });
-        if (uploadError) throw uploadError;
+        await supabase.storage.from("guide_covers").upload(fileName, coverFile, { upsert: true });
         const { data: publicUrlData } = supabase.storage.from("guide_covers").getPublicUrl(fileName);
         finalCoverUrl = publicUrlData.publicUrl;
       }
@@ -134,27 +124,23 @@ export default function WriteGuidePage() {
       if (finalCoverUrl) guideDataObj.cover_url = finalCoverUrl;
       if (existingGuideId) guideDataObj.id = existingGuideId;
 
-      const { data: guideData, error: guideError } = await supabase.from("guides").upsert(guideDataObj).select().single();
-      if (guideError) throw guideError;
+      const { data: guideData } = await supabase.from("guides").upsert(guideDataObj).select().single();
+      if (!guideData) return;
       setExistingGuideId(guideData.id);
 
       await supabase.from("guide_sections").delete().eq("guide_id", guideData.id);
 
       for (const sec of sections) {
         if (!sec.title && !sec.text) continue;
-        const { data: newSec, error: secError } = await supabase.from("guide_sections").insert({ guide_id: guideData.id, title: sec.title || "Sección sin título", text: sec.text }).select().single();
-        if (secError) throw secError;
+        const { data: newSec } = await supabase.from("guide_sections").insert({ guide_id: guideData.id, title: sec.title || "Sección sin título", text: sec.text }).select().single();
+        if (!newSec) continue;
 
         const checksToInsert = sec.checklists.filter(c => c.text.trim() !== "").map(c => ({ guide_section_id: newSec.id, text: c.text }));
-        if (checksToInsert.length > 0) {
-          const { error: checkError } = await supabase.from("checklist").insert(checksToInsert);
-          if (checkError) throw checkError;
-        }
+        if (checksToInsert.length > 0) await supabase.from("checklist").insert(checksToInsert);
       }
-      alert("¡Guía guardada/publicada con éxito! Eres una leyenda.");
-    } catch (error: any) {
+      alert("¡Guardado!");
+    } catch (error) {
       console.error(error);
-      alert("Error guardando la guía: " + error.message);
     } finally {
       setIsSaving(false);
     }
@@ -175,25 +161,49 @@ export default function WriteGuidePage() {
         
         <div className="window" style={{ margin: 0 }}>
           
-          <ul role="menubar" style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
-            <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}`)} style={{ display: "flex", alignItems: "center", gap: "6px", borderRight: "1px solid #ccc", paddingRight: "10px", marginRight: "5px" }}>
-              <ArrowLeft size={14} /> Volver al Juego
+          <style>{`
+            .tab-activa,
+            [role="menubar"] [role="menuitem"]:hover {
+              background: linear-gradient(to bottom, rgba(175, 205, 245, 0.4) 0%, rgba(135, 175, 225, 0.4) 100%) !important;
+              color: #000 !important;
+              border-radius: 3px;
+              box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+              outline: none !important;
+            }
+            [role="menubar"] {
+              padding: 2px 2px 0 2px !important;
+            }
+            [role="menuitem"] {
+              padding: 6px 12px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              cursor: pointer !important;
+              margin: 0 1px !important;
+            }
+          `}</style>
+
+          <ul role="menubar" style={{ display: "flex", alignItems: "center", fontSize: "14px", padding: "2px 2px 0 2px", marginBottom: 0 }}>
+            <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}`)} style={{ gap: "6px", borderRight: "1px solid #ccc", marginRight: "5px" }}>
+              <ArrowLeft size={14} /> Volver
             </li>
             
-            <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("def")} style={{ fontWeight: activeTab === "def" ? "bold" : "normal", display: "flex", alignItems: "center", gap: "6px" }}>
+            <li role="menuitem" tabIndex={0} className={activeTab === "def" ? "tab-activa" : ""} onClick={() => setActiveTab("def")} style={{ gap: "6px" }}>
               <Settings size={14}/> Definición
             </li>
             
-            <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("guide")} style={{ fontWeight: activeTab === "guide" ? "bold" : "normal", display: "flex", alignItems: "center", gap: "6px" }}>
+            <li role="menuitem" tabIndex={0} className={activeTab === "guide" ? "tab-activa" : ""} onClick={() => setActiveTab("guide")} style={{ gap: "6px" }}>
               <BookOpen size={14}/> Escritura
             </li>
             
-            <li role="menuitem" tabIndex={0} onClick={() => setActiveTab("checklist")} style={{ fontWeight: activeTab === "checklist" ? "bold" : "normal", display: "flex", alignItems: "center", gap: "6px" }}>
+            <li role="menuitem" tabIndex={0} className={activeTab === "checklist" ? "tab-activa" : ""} onClick={() => setActiveTab("checklist")} style={{ gap: "6px" }}>
               <ListChecks size={14}/> Checklist
             </li>
             
-            <li role="menuitem" tabIndex={0} onClick={handleSave} style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px", color: isSaving ? "#666" : "#0369a1", fontWeight: "bold" }}>
-              <Save size={14} /> {isSaving ? "Guardando..." : (existingGuideId ? "Actualizar Guía" : "Publicar Guía")}
+            <div style={{ flex: 1 }}></div>
+            
+            <li role="menuitem" tabIndex={0} className="tab-activa" onClick={isSaving ? undefined : handleSave} style={{ gap: "6px" }}>
+              <Save size={14} /> {isSaving ? "..." : (existingGuideId ? "Actualizar" : "Publicar")}
             </li>
           </ul>
 
@@ -202,38 +212,37 @@ export default function WriteGuidePage() {
             {activeTab === "def" && (
               <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
                 <fieldset style={{ width: "250px", padding: "15px", display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", flexShrink: 0 }}>
-                  <legend>Portada de la Guía</legend>
-                  <div style={{ width: "100%", aspectRatio: "3/4", border: "2px dashed #94a3b8", backgroundColor: "#f8fafc", position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                    {coverPreview ? (
-                      <>
-                        <img src={coverPreview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} style={{ position: "absolute", top: "-10px", right: "-10px", background: "red", color: "white", borderRadius: "50%", padding: "4px", border: "2px solid white", cursor: "pointer" }}>
-                          <X size={14} />
-                        </button>
-                      </>
-                    ) : (
-                      <label style={{ cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", padding: "20px", textAlign: "center" }}>
-                        <ImageIcon size={32} color="#94a3b8" />
-                        <span style={{ fontSize: "12px", color: "#3b82f6", fontWeight: "bold" }}>Subir Imagen</span>
-                        <input type="file" accept="image/*" onChange={handleCoverChange} style={{ display: "none" }} />
-                      </label>
-                    )}
+                  <legend>Portada</legend>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", gap: "10px" }}>
+                    <div style={{ 
+                      width: "150px", aspectRatio: "3/4", border: "2px inset #fff", backgroundColor: "#ccc",
+                      backgroundImage: coverPreview ? `url(${coverPreview})` : "none",
+                      backgroundSize: "cover", backgroundPosition: "center", flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center"
+                    }}>
+                      {!coverPreview && <span style={{ fontSize: "3rem", color: "#9ca3af" }}>🖼️</span>}
+                    </div>
+                    
+                    <input type="file" id="cover-upload" accept="image/*" style={{ display: "none" }} onChange={handleCoverChange} />
+                    <button onClick={() => document.getElementById("cover-upload")?.click()} style={{ width: "150px" }}>
+                      Cambiar foto
+                    </button>
                   </div>
                 </fieldset>
 
                 <fieldset style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
-                  <legend>Información Principal</legend>
+                  <legend>Información</legend>
                   <div className="field-row-stacked">
-                    <label style={{ fontWeight: "bold" }}>Título de la Guía:</label>
-                    <input type="text" value={guideInfo.title} onChange={e => setGuideInfo({...guideInfo, title: e.target.value})} placeholder="Ej: Guía Platino 100% Dark Souls II" style={{ width: "100%", padding: "6px" }} />
+                    <label style={{ fontWeight: "bold" }}>Título:</label>
+                    <input type="text" value={guideInfo.title} onChange={e => setGuideInfo({...guideInfo, title: e.target.value})} style={{ width: "100%", padding: "6px" }} />
                   </div>
                   <div style={{ display: "flex", gap: "20px" }}>
                     <div className="field-row-stacked" style={{ flex: 1 }}>
-                      <label style={{ fontWeight: "bold" }}>Tiempo Estimado (H):</label>
-                      <input type="number" value={guideInfo.average_time} onChange={e => setGuideInfo({...guideInfo, average_time: e.target.value})} placeholder="Ej: 80" style={{ width: "100%", padding: "6px" }} />
+                      <label style={{ fontWeight: "bold" }}>Horas:</label>
+                      <input type="number" value={guideInfo.average_time} onChange={e => setGuideInfo({...guideInfo, average_time: e.target.value})} style={{ width: "100%", padding: "6px" }} />
                     </div>
                     <div className="field-row-stacked" style={{ flex: 1 }}>
-                      <label style={{ fontWeight: "bold" }}>Dificultad (1-10):</label>
+                      <label style={{ fontWeight: "bold" }}>Dificultad:</label>
                       <input type="number" min="1" max="10" value={guideInfo.average_difficulty} onChange={e => setGuideInfo({...guideInfo, average_difficulty: Number(e.target.value)})} style={{ width: "100%", padding: "6px" }} />
                     </div>
                   </div>
@@ -246,50 +255,34 @@ export default function WriteGuidePage() {
                 {sections.map((sec, index) => (
                   <fieldset key={sec.id} style={{ padding: "15px", position: "relative", backgroundColor: "#fafafa" }}>
                     <legend style={{ fontWeight: "bold", color: "#3b82f6" }}>Sección {index + 1}</legend>
-                    <button onClick={() => removeSection(sec.id)} style={{ position: "absolute", top: "-12px", right: "10px", background: "#f87171", border: "1px solid #dc2626", color: "white", cursor: "pointer", padding: "2px 6px", borderRadius: "3px" }} title="Eliminar Sección"><Trash2 size={14} /></button>
-                    
+                    <button onClick={() => removeSection(sec.id)} style={{ position: "absolute", top: "-12px", right: "10px", background: "#f87171", border: "1px solid #dc2626", color: "white", cursor: "pointer", padding: "2px 6px", borderRadius: "3px" }}><Trash2 size={14} /></button>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                      <input 
-                        type="text" value={sec.title} onChange={e => updateSection(sec.id, "title", e.target.value)}
-                        placeholder="Título de la sección (Ej: Mundo Pintado de Ariamis)" 
-                        style={{ width: "100%", padding: "8px", fontSize: "16px", fontWeight: "bold" }} 
-                      />
-                      <textarea 
-                        value={sec.text} onChange={e => updateSection(sec.id, "text", e.target.value)}
-                        placeholder="Escribe aquí los secretos, pasos y consejos..."
-                        style={{ width: "100%", padding: "10px", minHeight: "150px", resize: "vertical", fontFamily: "inherit" }} 
-                      />
+                      <input type="text" value={sec.title} onChange={e => updateSection(sec.id, "title", e.target.value)} placeholder="Título..." style={{ width: "100%", padding: "8px", fontWeight: "bold" }} />
+                      <textarea value={sec.text} onChange={e => updateSection(sec.id, "text", e.target.value)} placeholder="Contenido..." style={{ width: "100%", padding: "10px", minHeight: "150px", resize: "vertical" }} />
                     </div>
                   </fieldset>
                 ))}
                 <button className="default aero-btn-list" onClick={addSection} style={{ alignSelf: "center", padding: "6px 15px", display: "flex", alignItems: "center", gap: "5px" }}>
-                  <Plus size={16} /> Añadir Nueva Sección
+                  <Plus size={16} /> Nueva Sección
                 </button>
               </div>
             )}
 
             {activeTab === "checklist" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                <div style={{ backgroundColor: "#e0f2fe", border: "1px solid #bae6fd", padding: "10px", borderRadius: "4px", fontSize: "13px", color: "#0369a1" }}>
-                  ℹ️ Las tareas se agrupan automáticamente según las secciones que hayas creado en la pestaña <b>Escritura</b>.
-                </div>
-                
                 {sections.map((sec, index) => (
                   <fieldset key={sec.id} style={{ padding: "15px" }}>
-                    <legend style={{ fontWeight: "bold" }}>{sec.title || `Sección ${index + 1} (Sin Título)`}</legend>
+                    <legend style={{ fontWeight: "bold" }}>{sec.title || `Sección ${index + 1}`}</legend>
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       {sec.checklists.map((check) => (
                         <div key={check.id} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <input type="checkbox" disabled style={{ margin: 0 }} />
-                          <input 
-                            type="text" value={check.text} onChange={e => updateChecklist(sec.id, check.id, e.target.value)}
-                            placeholder="Ej: Recoger el Ascua Grande" style={{ flex: 1, padding: "4px 8px" }} 
-                          />
-                          <button onClick={() => removeChecklist(sec.id, check.id)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}><Trash2 size={16} /></button>
+                          <input type="checkbox" disabled />
+                          <input type="text" value={check.text} onChange={e => updateChecklist(sec.id, check.id, e.target.value)} placeholder="Tarea..." style={{ flex: 1, padding: "4px 8px" }} />
+                          <button onClick={() => removeChecklist(sec.id, check.id)} style={{ background: "none", border: "none", color: "#ef4444" }}><Trash2 size={16} /></button>
                         </div>
                       ))}
-                      <button onClick={() => addChecklist(sec.id)} style={{ alignSelf: "flex-start", marginTop: "5px", background: "none", border: "none", color: "#3b82f6", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", fontSize: "13px" }}>
-                        <Plus size={14} /> Añadir tarea a esta sección
+                      <button onClick={() => addChecklist(sec.id)} style={{ alignSelf: "flex-start", background: "none", border: "none", color: "#3b82f6", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <Plus size={14} /> Añadir tarea
                       </button>
                     </div>
                   </fieldset>

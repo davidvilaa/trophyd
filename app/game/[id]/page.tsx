@@ -111,7 +111,8 @@ export default function GamePage() {
           id, 
           title, 
           average_time, 
-          average_difficulty, 
+          average_difficulty,
+          cover_url, 
           user_id, 
           profiles (nickname)
         `)
@@ -319,12 +320,19 @@ export default function GamePage() {
           <fieldset style={{ padding: "20px", backgroundColor: "#fff", border: "1px solid #ccc", minHeight: "250px" }}>
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
-              <legend style={{ fontSize: "18px", padding: "0 5px", margin: 0 }}>
-                Guías de la Comunidad
-              </legend>
+              <legend style={{ fontSize: "18px", padding: "0 5px", margin: 0 }}>Guías de la Comunidad ({guides.length})</legend>
               <button 
-                onClick={() => console.log("Próximamente: Redirigir al creador de guías")}
-                style={{ padding: "4px 10px", cursor: "pointer" }}
+                className="default aero-btn-list"
+                onClick={() => {
+                  if (!currentUserId) return alert("Debes iniciar sesión para escribir una guía.");
+                  const myGuide = guides.find(g => g.user_id === currentUserId);
+                  if (myGuide) {
+                    router.push(`/game/${gameId}/write-guide?guideId=${myGuide.id}`);
+                  } else {
+                    router.push(`/game/${gameId}/write-guide`);
+                  }
+                }}
+                style={{ padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}
               >
                 + Escribir Guía
               </button>
@@ -428,7 +436,7 @@ export default function GamePage() {
                     }}>
                     <div 
                       className="guide-case" 
-                      style={{ backgroundImage: `url(${gameData.cover_image_url})` }}
+                      style={{ backgroundImage: `url(${guia.cover_url || gameData.cover_image_url})` }}
                     >
                       <div className="guide-info-gradient">
                         <div style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.title}>
