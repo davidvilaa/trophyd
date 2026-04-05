@@ -129,8 +129,8 @@ export default function WriteGuidePage() {
     if (type === "image") {
       const altText = selection || "alt";
       insert = `![${altText}](url)`;
-      newCursorStart = start + 2;
-      newCursorEnd = start + 2 + altText.length;
+      newCursorStart = start + altText.length + 4;
+      newCursorEnd = newCursorStart + 3;
     }
 
     const newText = text.substring(0, start) + insert + text.substring(end);
@@ -251,7 +251,13 @@ export default function WriteGuidePage() {
             
             <div style={{ flex: 1 }}></div>
             
-            <li role="menuitem" tabIndex={0} className="tab-activa" onClick={isSaving ? undefined : handleSave} style={{ gap: "6px" }}>
+            {existingGuideId && (
+              <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}/guide/${existingGuideId}`)} style={{ gap: "6px", borderRight: "1px solid #ccc", marginRight: "5px" }}>
+                <Eye size={14} /> Ver Guía
+              </li>
+            )}
+            
+            <li role="menuitem" tabIndex={0} className="tab-activa" onClick={isSaving ? undefined : handleSave} style={{ gap: "6px", cursor: isSaving ? "wait" : "pointer" }}>
               <Save size={14} /> {isSaving ? "..." : (existingGuideId ? "Actualizar" : "Publicar")}
             </li>
           </ul>
@@ -264,7 +270,7 @@ export default function WriteGuidePage() {
                   <legend>Portada</legend>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", gap: "10px" }}>
                     <div style={{ 
-                      width: "150px", aspectRatio: "3/4", border: "2px inset #fff", backgroundColor: "#ccc",
+                      width: "150px", aspectRatio: "1/1", border: "2px inset #fff", backgroundColor: "#ccc",
                       backgroundImage: coverPreview ? `url(${coverPreview})` : "none",
                       backgroundSize: "cover", backgroundPosition: "center", flexShrink: 0,
                       display: "flex", alignItems: "center", justifyContent: "center"
