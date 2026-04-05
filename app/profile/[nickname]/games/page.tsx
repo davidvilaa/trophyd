@@ -284,6 +284,7 @@ export default function ProfileGamesPage() {
               disabled={!hasActiveFilters}
               className={`reset-btn-narrow ${hasActiveFilters ? "active" : ""}`}
               title="Clear Filters"
+              style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}
             >
               <Eraser size={18} />
             </button>

@@ -367,10 +367,12 @@ export default function WriteGuidePage() {
                         <div key={check.id} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <input type="checkbox" disabled />
                           <input type="text" value={check.text} onChange={e => updateChecklist(sec.id, check.id, e.target.value)} placeholder="Tarea..." style={{ flex: 1, padding: "4px 8px" }} />
-                          <button onClick={() => removeChecklist(sec.id, check.id)} style={{ background: "none", border: "none", color: "#ef4444" }}><Trash2 size={16} /></button>
+                          <button onClick={() => removeChecklist(sec.id, check.id)} style={{ background: "#f87171", border: "1px solid #dc2626", color: "white", cursor: "pointer", padding: "2px 6px", borderRadius: "3px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       ))}
-                      <button onClick={() => addChecklist(sec.id)} style={{ alignSelf: "flex-start", background: "none", border: "none", color: "#3b82f6", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <button onClick={() => addChecklist(sec.id)} style={{ alignSelf: "flex-start", marginTop: "5px", background: "none", border: "none", color: "#3b82f6", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
                         <Plus size={14} /> Añadir tarea
                       </button>
                     </div>
