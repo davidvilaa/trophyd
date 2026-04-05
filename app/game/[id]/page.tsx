@@ -325,12 +325,7 @@ export default function GamePage() {
                 className="default aero-btn-list"
                 onClick={() => {
                   if (!currentUserId) return alert("Debes iniciar sesión para escribir una guía.");
-                  const myGuide = guides.find(g => g.user_id === currentUserId);
-                  if (myGuide) {
-                    router.push(`/game/${gameId}/write-guide?guideId=${myGuide.id}`);
-                  } else {
-                    router.push(`/game/${gameId}/write-guide`);
-                  }
+                  router.push(`/game/${gameId}/write-guide`);
                 }}
                 style={{ padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}
               >

@@ -53,7 +53,13 @@ export default function WriteGuidePage() {
 
   useEffect(() => {
     const loadExistingGuide = async () => {
-      if (!guideIdFromUrl) return;
+      if (!guideIdFromUrl) {
+        setExistingGuideId(null);
+        setGuideInfo({ title: "", average_time: "", average_difficulty: 1 });
+        setSections([{ id: Date.now().toString(), title: "Introducción", text: "", checklists: [] }]);
+        setCoverPreview(null);
+        return;
+      }
       
       const { data: guide } = await supabase
         .from("guides")
