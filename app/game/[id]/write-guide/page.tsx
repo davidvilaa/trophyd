@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Save, Image as ImageIcon, BookOpen, ListChecks, Plus, Trash2, ArrowLeft, Settings, X } from "lucide-react";
+import { Save, Image as ImageIcon, BookOpen, ListChecks, Plus, Trash2, ArrowLeft, Settings, X, Eye, Edit2, Bold, Italic, Link } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function WriteGuidePage() {
   const params = useParams();
@@ -27,6 +29,8 @@ export default function WriteGuidePage() {
   const [sections, setSections] = useState([
     { id: Date.now().toString(), title: "Introducción", text: "", checklists: [{ id: Date.now().toString() + "c", text: "" }] }
   ]);
+
+  const [previewMode, setPreviewMode] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -92,6 +96,51 @@ export default function WriteGuidePage() {
   const addChecklist = (sectionId: string) => setSections(sections.map(s => s.id === sectionId ? { ...s, checklists: [...s.checklists, { id: Date.now().toString(), text: "" }] } : s));
   const updateChecklist = (sectionId: string, checklistId: string, text: string) => setSections(sections.map(s => s.id === sectionId ? { ...s, checklists: s.checklists.map(c => c.id === checklistId ? { ...c, text } : c) } : s));
   const removeChecklist = (sectionId: string, checklistId: string) => setSections(sections.map(s => s.id === sectionId ? { ...s, checklists: s.checklists.filter(c => c.id !== checklistId) } : s));
+
+  const applyFormat = (sectionId: string, type: "bold" | "italic" | "link" | "image") => {
+    const textarea = document.getElementById(`textarea-${sectionId}`) as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = sections.find(s => s.id === sectionId)?.text || "";
+    const selection = text.substring(start, end);
+
+    let insert = "";
+    let newCursorStart = start;
+    let newCursorEnd = start;
+
+    if (type === "bold") {
+      insert = `**${selection}**`;
+      newCursorStart = start + 2;
+      newCursorEnd = start + 2 + selection.length;
+    }
+    if (type === "italic") {
+      insert = `*${selection}*`;
+      newCursorStart = start + 1;
+      newCursorEnd = start + 1 + selection.length;
+    }
+    if (type === "link") {
+      const linkText = selection || "texto";
+      insert = `[${linkText}](url)`;
+      newCursorStart = start + 1;
+      newCursorEnd = start + 1 + linkText.length;
+    }
+    if (type === "image") {
+      const altText = selection || "alt";
+      insert = `![${altText}](url)`;
+      newCursorStart = start + 2;
+      newCursorEnd = start + 2 + altText.length;
+    }
+
+    const newText = text.substring(0, start) + insert + text.substring(end);
+    updateSection(sectionId, "text", newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorStart, newCursorEnd);
+    }, 10);
+  };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -256,9 +305,49 @@ export default function WriteGuidePage() {
                   <fieldset key={sec.id} style={{ padding: "15px", position: "relative", backgroundColor: "#fafafa" }}>
                     <legend style={{ fontWeight: "bold", color: "#3b82f6" }}>Sección {index + 1}</legend>
                     <button onClick={() => removeSection(sec.id)} style={{ position: "absolute", top: "-12px", right: "10px", background: "#f87171", border: "1px solid #dc2626", color: "white", cursor: "pointer", padding: "2px 6px", borderRadius: "3px" }}><Trash2 size={14} /></button>
+                    
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       <input type="text" value={sec.title} onChange={e => updateSection(sec.id, "title", e.target.value)} placeholder="Título..." style={{ width: "100%", padding: "8px", fontWeight: "bold" }} />
-                      <textarea value={sec.text} onChange={e => updateSection(sec.id, "text", e.target.value)} placeholder="Contenido..." style={{ width: "100%", padding: "10px", minHeight: "150px", resize: "vertical" }} />
+                      
+                      <ul role="menubar" style={{ display: "flex", fontSize: "12px", padding: "0", marginBottom: 0, width: "fit-content" }}>
+                        <li role="menuitem" tabIndex={0} onClick={() => setPreviewMode({...previewMode, [sec.id]: false})} className={!previewMode[sec.id] ? "tab-activa" : ""} style={{ gap: "4px", padding: "4px 10px", cursor: "pointer" }}>
+                          <Edit2 size={12}/> Editar
+                        </li>
+                        <li role="menuitem" tabIndex={0} onClick={() => setPreviewMode({...previewMode, [sec.id]: true})} className={previewMode[sec.id] ? "tab-activa" : ""} style={{ gap: "4px", padding: "4px 10px", cursor: "pointer" }}>
+                          <Eye size={12}/> Vista Previa
+                        </li>
+                      </ul>
+
+                      {!previewMode[sec.id] ? (
+                        <div style={{ display: "flex", flexDirection: "column", border: "1px solid #ccc", borderRadius: "2px", overflow: "hidden" }}>
+                          <div style={{ display: "flex", gap: "2px", padding: "4px", backgroundColor: "#f3f4f6", borderBottom: "1px solid #ccc", alignItems: "center" }}>
+                            <button onClick={() => applyFormat(sec.id, "bold")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
+                              <Bold size={14} />
+                            </button>
+                            <button onClick={() => applyFormat(sec.id, "italic")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
+                              <Italic size={14} />
+                            </button>
+                            <div style={{ width: "1px", height: "16px", backgroundColor: "#ccc", margin: "0 4px" }}></div>
+                            <button onClick={() => applyFormat(sec.id, "link")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
+                              <Link size={14} />
+                            </button>
+                            <button onClick={() => applyFormat(sec.id, "image")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
+                              <ImageIcon size={14} />
+                            </button>
+                          </div>
+                          <textarea 
+                            id={`textarea-${sec.id}`}
+                            value={sec.text} 
+                            onChange={e => updateSection(sec.id, "text", e.target.value)} 
+                            placeholder="Escribe aquí..." 
+                            style={{ width: "100%", padding: "10px", minHeight: "150px", resize: "vertical", fontFamily: "monospace", border: "none", outline: "none" }} 
+                          />
+                        </div>
+                      ) : (
+                        <div style={{ width: "100%", padding: "10px", minHeight: "180px", backgroundColor: "#fff", border: "1px solid #ccc", borderRadius: "2px", overflowY: "auto" }}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{sec.text || "*Nada que mostrar todavía...*"}</ReactMarkdown>
+                        </div>
+                      )}
                     </div>
                   </fieldset>
                 ))}
