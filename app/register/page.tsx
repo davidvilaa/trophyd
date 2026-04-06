@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Draggable from "react-draggable";
+import { Trophy } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -57,9 +58,38 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[url('https://wallpapers.com/images/hd/artistic-blue-windows-7-cover-v0qwgn3ypat2bloy.jpg')] bg-cover bg-center overflow-hidden">
       
+      <style>{`
+        .btn-gelatina {
+          background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 49%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.2) 100%) !important;
+          border: 1px solid #707070 !important;
+          transition: all 0.1s ease;
+          cursor: pointer;
+          color: #000 !important;
+        }
+
+        .btn-gelatina:hover:not(:disabled) {
+          filter: brightness(1.05);
+          box-shadow: inset 0 0 5px rgba(255,255,255,0.5), 0 0 8px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .btn-gelatina:active:not(:disabled) {
+          transform: translateY(1px);
+          background-image: linear-gradient(0deg, rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%) !important;
+        }
+
+        .form-row {
+          display: grid;
+          /* 65px para que quepa "Usuario:" sin estirar todo */
+          grid-template-columns: 65px 1fr; 
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+        }
+      `}</style>
+
       <Draggable handle=".title-bar" nodeRef={nodeRef}>
         
-        <div ref={nodeRef} className="window glass active" style={{ width: "100%", maxWidth: "550px", position: "absolute" }}>
+       <div ref={nodeRef} className="window glass active" style={{ width: "100%", maxWidth: "420px" }}>
           
           <div className="title-bar" style={{ cursor: "grab" }}>
             <div className="title-bar-text">Registro de Completista - Trophyd</div>
@@ -70,51 +100,74 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="window-body has-space">
+          <div className="window-body has-space" style={{ padding: "20px" }}>
+            
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", marginBottom: "25px" }}>
+              <Trophy style={{ width: "40px", height: "40px", color: "#BBBBBB", filter: "drop-shadow(0 2px 2px rgba(255,255,255,0.6))" }} />
+              <span style={{ fontSize: "2rem", fontWeight: "900", color: "#000", textShadow: "0 0 5px rgba(255,255,255,0.8), 0 1px 1px rgba(255,255,255,1)" }}>
+                Trophy<span style={{ color: "#BBBBBB" }}>d</span>
+              </span>
+            </div>
+
             {error && (
-              <div style={{ color: "red", marginBottom: "15px", fontWeight: "bold", padding: "10px", backgroundColor: "rgba(255,0,0,0.1)", border: "1px solid red" }}>
+              <div style={{ color: "red", marginBottom: "15px", fontWeight: "bold", padding: "10px", backgroundColor: "rgba(255,0,0,0.1)", border: "1px solid red", textAlign: "center" }}>
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "20px", alignItems: "center" }}>
               
-              <div className="field-row-stacked">
-                <label htmlFor="username">Nombre de usuario:</label>
-                <input 
-                  id="username" type="text" required 
-                  value={username} onChange={(e) => setUsername(e.target.value)}
-                  placeholder="NinjaTrophy99"
-                />
+              <div style={{ width: "100%", maxWidth: "340px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                
+                <div className="form-row">
+                  <label htmlFor="username" style={{ fontSize: "12px", fontWeight: "bold", color: "#333", textAlign: "left" }}>Usuario:</label>
+                  <input 
+                    id="username" type="text" required 
+                    value={username} onChange={(e) => setUsername(e.target.value)}
+                    placeholder="NinjaTrophy99"
+                    style={{ width: "100%", padding: "6px 8px", boxSizing: "border-box" }}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <label htmlFor="email" style={{ fontSize: "12px", fontWeight: "bold", color: "#333", textAlign: "left" }}>Email:</label>
+                  <input 
+                    id="email" type="email" required 
+                    value={email} onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    style={{ width: "100%", padding: "6px 8px", boxSizing: "border-box" }}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <label htmlFor="password" style={{ fontSize: "12px", fontWeight: "bold", color: "#333", textAlign: "left" }}>Pass:</label>
+                  <input 
+                    id="password" type="password" required 
+                    value={password} onChange={(e) => setPassword(e.target.value)}
+                    style={{ width: "100%", padding: "6px 8px", boxSizing: "border-box" }}
+                  />
+                </div>
+
               </div>
 
-              <div className="field-row-stacked">
-                <label htmlFor="email">Dirección de E-mail:</label>
-                <input 
-                  id="email" type="email" required 
-                  value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                />
-              </div>
-
-              <div className="field-row-stacked">
-                <label htmlFor="password">Contraseña (mínimo 6 caracteres):</label>
-                <input 
-                  id="password" type="password" required 
-                  value={password} onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <section className="field-row" style={{ justifyContent: "flex-end", marginTop: "15px" }}>
-                <Link href="/login">
-                  <button type="button">Ya tengo cuenta</button>
-                </Link>
-                <button type="submit" className="default" disabled={loading}>
+              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "10px", marginTop: "5px" }}>
+                
+                <button type="submit" className="default btn-gelatina" disabled={loading} style={{ width: "100%", height: "38px", fontSize: "14px" }}>
                   {loading ? "Registrando..." : "Crear cuenta"}
                 </button>
-              </section>
-            </form>
+                
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(0,0,0,0.1)" }}></div>
+                    <span style={{ fontSize: "11px", color: "#666", whiteSpace: "nowrap" }}>o si ya tienes cuenta</span>
+                    <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(0,0,0,0.1)" }}></div>
+                </div>
 
+                <Link href="/login" style={{ width: "100%" }}>
+                  <button type="button" className="btn-gelatina" style={{ width: "100%", height: "32px" }}>Iniciar Sesión</button>
+                </Link>
+
+              </div>
+            </form>
           </div>
         </div>
       </Draggable>
