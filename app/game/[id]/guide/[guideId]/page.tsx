@@ -98,6 +98,48 @@ export default function GuideReadingPage() {
     }
   };
 
+  const getDifficultyColor = (diff: number) => {
+    const d = Math.round(diff);
+    if (d <= 3) return "rgba(21, 128, 61, 0.6)";
+    if (d <= 5) return "rgba(101, 163, 13, 0.6)";
+    if (d <= 7) return "rgba(202, 138, 4, 0.6)";
+    if (d === 8) return "rgba(194, 65, 12, 0.6)";
+    if (d === 9) return "rgba(185, 28, 28, 0.6)";
+    return "rgba(127, 29, 29, 0.8)";
+  };
+
+  const getTimeColor = (hours: number) => {
+    const h = Number(hours);
+    if (h <= 5) return "rgba(21, 128, 61, 0.6)";
+    if (h <= 10) return "rgba(101, 163, 13, 0.6)";
+    if (h <= 30) return "rgba(202, 138, 4, 0.6)";
+    if (h <= 50) return "rgba(217, 119, 6, 0.6)";
+    if (h <= 80) return "rgba(194, 65, 12, 0.6)";
+    if (h <= 100) return "rgba(154, 52, 18, 0.6)";
+    if (h <= 300) return "rgba(185, 28, 28, 0.6)";
+    return "rgba(127, 29, 29, 0.8)";                   
+  };
+
+  const getRetroBadgeStyle = (bgColor: string) => ({
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "6px 16px",
+    backgroundColor: bgColor,
+    backgroundImage: "linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%)",
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
+    border: "1px solid rgba(255, 255, 255, 0.3)",
+    borderTopColor: "rgba(255, 255, 255, 0.7)",
+    borderBottomColor: "rgba(0, 0, 0, 0.8)",
+    borderRadius: "6px",
+    color: "#fff",
+    fontSize: "14px",
+    fontWeight: "bold",
+    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -1px 3px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.4)",
+    textShadow: "0 1px 2px rgba(0,0,0,0.9)",
+  });
+
   const totalChecks = sections.reduce((acc, sec) => acc + (sec.checklist?.length || 0), 0);
   const progressPercent = totalChecks === 0 ? 0 : Math.round((markedChecks.size / totalChecks) * 100);
 
@@ -117,8 +159,29 @@ export default function GuideReadingPage() {
         
         <div className="window" style={{ margin: 0 }}>
           
-          <ul role="menubar" style={{ display: "flex", alignItems: "center", fontSize: "14px", padding: "2px 2px 0 2px", marginBottom: 0, position: "relative" }}>
-            <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}`)} style={{ gap: "6px", borderRight: "1px solid #ccc", marginRight: "5px", zIndex: 10, cursor: "pointer", padding: "6px 12px", display: "flex", alignItems: "center" }}>
+          <style>{`
+            [role="menubar"] [role="menuitem"]:hover {
+              background: linear-gradient(to bottom, rgba(175, 205, 245, 0.4) 0%, rgba(135, 175, 225, 0.4) 100%) !important;
+              color: #000 !important;
+              border-radius: 3px;
+              box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+              outline: none !important;
+            }
+            [role="menubar"] {
+              padding: 2px 2px 0 2px !important;
+            }
+            [role="menuitem"] {
+              padding: 6px 12px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              cursor: pointer !important;
+              margin: 0 1px !important;
+            }
+          `}</style>
+
+          <ul role="menubar" style={{ display: "flex", alignItems: "center", fontSize: "14px", position: "relative", marginBottom: 0 }}>
+            <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}`)} style={{ gap: "6px", borderRight: "1px solid #ccc", marginRight: "5px", zIndex: 10 }}>
               <ArrowLeft size={14} /> Volver al Juego
             </li>
             
@@ -132,11 +195,14 @@ export default function GuideReadingPage() {
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "40px", paddingBottom: "10px" }}>
               
               <div style={{ display: "flex", gap: "15px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 18px", backgroundColor: "#e0f2fe", border: "1px solid #7dd3fc", borderRadius: "6px", fontSize: "15px", fontWeight: "bold", color: "#0369a1", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
-                  <Dumbbell size={18}/> {guideData.average_difficulty}/10
+                <div style={getRetroBadgeStyle(getDifficultyColor(guideData.average_difficulty))}>
+                  <Dumbbell size={18} style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.8))", strokeWidth: 2.5 }} /> 
+                  {guideData.average_difficulty}/10
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 18px", backgroundColor: "#e0f2fe", border: "1px solid #7dd3fc", borderRadius: "6px", fontSize: "15px", fontWeight: "bold", color: "#0369a1", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
-                  <Clock size={18}/> {guideData.average_time}h
+
+                <div style={getRetroBadgeStyle(getTimeColor(guideData.average_time))}>
+                  <Clock size={18} style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.8))", strokeWidth: 2.5 }} /> 
+                  {guideData.average_time}h
                 </div>
               </div>
 
@@ -258,7 +324,7 @@ export default function GuideReadingPage() {
             <hr style={{ width: "100%", border: "none", borderBottom: "1px solid #e5e7eb", marginTop: "20px" }} />
         
             <div style={{ textAlign: "center", fontSize: "14px", color: "#64748b", paddingBottom: "10px" }}>
-              Guía escrita por <span style={{ color: "#3b82f6", fontWeight: "bold" }}>{guideData.profiles?.nickname}</span>
+              por <span style={{ color: "#3b82f6", fontWeight: "bold"}}>{guideData.profiles?.nickname}</span>
             </div>
           </div>
         </div>

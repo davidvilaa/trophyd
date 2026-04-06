@@ -46,6 +46,30 @@ export default function ProfileGuidesPage() {
     if (targetNickname) cargarGuias();
   }, [targetNickname]);
 
+  const getDifficultyColor = (diff: number | null | undefined) => {
+    if (!diff) return "rgba(20, 30, 40, 0.5)";
+    const d = Math.round(Number(diff));
+    if (d <= 3) return "rgba(21, 128, 61, 0.6)";
+    if (d <= 5) return "rgba(101, 163, 13, 0.6)";
+    if (d <= 7) return "rgba(202, 138, 4, 0.6)";
+    if (d === 8) return "rgba(194, 65, 12, 0.6)";
+    if (d === 9) return "rgba(185, 28, 28, 0.6)";
+    return "rgba(127, 29, 29, 0.8)";
+  };
+
+  const getTimeColor = (hours: number | null | undefined) => {
+    if (!hours) return "rgba(20, 30, 40, 0.5)"; 
+    const h = Number(hours);
+    if (h <= 5) return "rgba(21, 128, 61, 0.6)";
+    if (h <= 10) return "rgba(101, 163, 13, 0.6)";
+    if (h <= 30) return "rgba(202, 138, 4, 0.6)";
+    if (h <= 50) return "rgba(217, 119, 6, 0.6)";
+    if (h <= 80) return "rgba(194, 65, 12, 0.6)";
+    if (h <= 100) return "rgba(154, 52, 18, 0.6)";
+    if (h <= 300) return "rgba(185, 28, 28, 0.6)";
+    return "rgba(127, 29, 29, 0.8)";
+  };
+
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando guías...</div>;
 
   return (
@@ -191,11 +215,11 @@ export default function ProfileGuidesPage() {
                 </div>
 
                 <div className="guide-badges-area">
-                  <div className="embedded-badge" title="Difficulty">
+                  <div className="embedded-badge" title="Difficulty" style={{ backgroundColor: getDifficultyColor(guia.average_difficulty) }}>
                     <Dumbbell size={16} />
                     <span>{guia.average_difficulty ? `${guia.average_difficulty}/10` : "--/10"}</span>
                   </div>
-                  <div className="embedded-badge" title="Time">
+                  <div className="embedded-badge" title="Time" style={{ backgroundColor: getTimeColor(guia.average_time) }}>
                     <Clock size={16} />
                     <span>{guia.average_time ? `${guia.average_time}h` : "--h"}</span>
                   </div>

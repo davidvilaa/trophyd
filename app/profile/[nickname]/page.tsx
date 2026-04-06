@@ -147,6 +147,30 @@ export default function ProfileContentPage() {
   const favoritosMostrados = Array(5).fill(null).map((_, index) => favoritos[index] || null);
   const escalas = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
+  const getDifficultyColor = (diff: number | null | undefined) => {
+    if (!diff) return "rgba(20, 30, 40, 0.5)";
+    const d = Math.round(Number(diff));
+    if (d <= 3) return "rgba(21, 128, 61, 0.6)";
+    if (d <= 5) return "rgba(101, 163, 13, 0.6)";
+    if (d <= 7) return "rgba(202, 138, 4, 0.6)";
+    if (d === 8) return "rgba(194, 65, 12, 0.6)";
+    if (d === 9) return "rgba(185, 28, 28, 0.6)";
+    return "rgba(127, 29, 29, 0.8)";
+  };
+
+  const getTimeColor = (hours: number | null | undefined) => {
+    if (!hours) return "rgba(20, 30, 40, 0.5)"; 
+    const h = Number(hours);
+    if (h <= 5) return "rgba(21, 128, 61, 0.6)";
+    if (h <= 10) return "rgba(101, 163, 13, 0.6)";
+    if (h <= 30) return "rgba(202, 138, 4, 0.6)";
+    if (h <= 50) return "rgba(217, 119, 6, 0.6)";
+    if (h <= 80) return "rgba(194, 65, 12, 0.6)";
+    if (h <= 100) return "rgba(154, 52, 18, 0.6)";
+    if (h <= 300) return "rgba(185, 28, 28, 0.6)";
+    return "rgba(127, 29, 29, 0.8)";
+  };
+
   if (loading) {
     return <div style={{ padding: "20px", textAlign: "center" }}>Cargando estadísticas...</div>;
   }
@@ -203,58 +227,54 @@ export default function ProfileContentPage() {
             box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
           }
 
-          .badges-area {
+          .case-overlay-container {
             position: absolute;
-            bottom: 12px;
-            left: 50%;
-            transform: translateX(-50%) translateZ(50px);
-            width: 115%;
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            gap: 5px;
+            top: 0; bottom: 0; left: 0; right: 0;
             opacity: 0;
             transition: opacity 0.2s ease;
             transform-style: preserve-3d;
+            pointer-events: none;
           }
 
-          .fav-case-container.has-game:hover .badges-area {
+          .fav-case-container.has-game:hover .case-overlay-container {
             opacity: 1;
+          }
+
+          .badges-row {
+            position: absolute;
+            top: 8px;
+            left: 0; right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            padding: 0 8px;
+            transform: translateZ(30px);
+            transform-style: preserve-3d;
           }
 
           .embedded-badge {
             flex: 1 1 0%; 
             justify-content: center;
-            
             background-color: rgba(20, 30, 40, 0.5); 
             background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
-            
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
-            
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-top-color: rgba(255, 255, 255, 0.7); 
             border-bottom-color: rgba(0, 0, 0, 0.8);   
             border-radius: 6px;
-            
             color: #fff;
             padding: 3px 4px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 4px;
-            
-            box-shadow: 
-              inset 0 1px 1px rgba(255, 255, 255, 0.7), 
-              inset 0 -1px 3px rgba(0, 0, 0, 0.5), 
-              0 4px 10px rgba(0, 0, 0, 0.6);
-              
+            gap: 3px;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -1px 3px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.5);
             text-transform: capitalize;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            
             text-shadow: 0 1px 2px rgba(0,0,0,0.9);
           }
 
@@ -263,6 +283,38 @@ export default function ProfileContentPage() {
             color: #fff;
             flex-shrink: 0;
             filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
+          }
+
+          .stars-row {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(40px); 
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            font-size: 2.2rem;
+            color: rgba(255, 255, 255, 0.4); 
+            width: max-content;
+            transform-style: preserve-3d;
+            pointer-events: auto;
+          }
+
+          .stars-row span {
+            transition: color 0.15s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.15s ease;
+            filter: drop-shadow(0 5px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 2px rgba(255,255,255,0.3));
+            cursor: pointer;
+          }
+
+          .stars-row span:hover {
+            transform: translateY(-6px) translateZ(20px) scale(1.3);
+            color: #fbbf24;
+            filter: drop-shadow(0 0 12px rgba(251, 191, 36, 1)) drop-shadow(0 8px 8px rgba(0,0,0,0.9));
+          }
+
+          .stars-row span.active {
+            color: #fbbf24; 
+            filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.7)) drop-shadow(0 3px 5px rgba(0,0,0,0.9));
           }
         `}</style>
         
@@ -329,17 +381,27 @@ export default function ProfileContentPage() {
                     className="fav-case" 
                     style={{ backgroundImage: `url(${fav.games?.cover_image_url})` }}
                   >
-                    <div className="badges-area">
-                      <div className="embedded-badge" title="Time Played">
-                        <Clock size={16} />
-                        <span>{fav.time_played ? `${fav.time_played}h` : "--h"}</span>
+                    <div className="case-overlay-container">
+                      <div className="badges-row">
+                        <div className="embedded-badge" title="Time Played" style={{ backgroundColor: getTimeColor(fav.time_played) }}>
+                          <Clock size={16} />
+                          <span>{fav.time_played ? `${fav.time_played}h` : "--h"}</span>
+                        </div>
+                        <div className="embedded-badge" title="Difficulty" style={{ backgroundColor: getDifficultyColor(fav.difficulty) }}>
+                          <Dumbbell size={16} />
+                          <span>{fav.difficulty || "Default"}</span>
+                        </div>
                       </div>
-                      <div className="embedded-badge" title="Difficulty">
-                        <Dumbbell size={16} />
-                        <span>{fav.difficulty || "Default"}</span>
-                      </div>
-                      <div className="embedded-badge" title="Rating">
-                        <span>{fav.rating ? `★ ${fav.rating}` : "★ --"}</span>
+
+                      <div className="stars-row">
+                        {[1, 2, 3, 4, 5].map((starIndex) => (
+                          <span 
+                            key={starIndex}
+                            className={fav.rating && fav.rating >= starIndex ? "active" : ""}
+                          >
+                            ★
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </div>
