@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import { ArrowLeft, Clock, Dumbbell, Award, CheckSquare, Square } from "lucide-react";
 
 export default function GuideReadingPage() {
@@ -20,6 +22,14 @@ export default function GuideReadingPage() {
   const [sections, setSections] = useState<any[]>([]);
   const [markedChecks, setMarkedChecks] = useState<Set<string>>(new Set());
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const sanitizeSchema = {
+    tagNames: ['u', 'br', 'strong', 'em', 'p', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'img', 'a'],
+    attributes: {
+      'a': ['href', 'title', 'target'],
+      'img': ['src', 'alt', 'title', 'width', 'height']
+    }
+  };
 
   const toggleSection = (id: string) => {
     setCollapsedSections(prev => ({ ...prev, [id]: !prev[id] }));
@@ -271,7 +281,7 @@ export default function GuideReadingPage() {
                         <div className="window-body" style={{ margin: 0, padding: "20px", backgroundColor: "#fff", display: "flex", flexDirection: "column", gap: "15px" }}>
                           {sec.text && (
                             <div style={{ fontSize: "15px", lineHeight: "1.6", color: "#334155" }}>
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{sec.text}</ReactMarkdown>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}>{sec.text}</ReactMarkdown>
                             </div>
                           )}
 

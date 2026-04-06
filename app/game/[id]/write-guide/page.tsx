@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Save, Image as ImageIcon, BookOpen, ListChecks, Plus, Trash2, ArrowLeft, Settings, X, Eye, Edit2, Bold, Italic, Link } from "lucide-react";
+import { Save, Image as ImageIcon, BookOpen, ListChecks, Plus, Trash2, ArrowLeft, Settings, X, Eye, Edit2, Bold, Italic, Link, Underline, List } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 
 export default function WriteGuidePage() {
   const params = useParams();
@@ -31,6 +33,14 @@ export default function WriteGuidePage() {
   ]);
 
   const [previewMode, setPreviewMode] = useState<Record<string, boolean>>({});
+
+  const sanitizeSchema = {
+    tagNames: ['u', 'br', 'strong', 'em', 'p', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'img', 'a'],
+    attributes: {
+      'a': ['href', 'title', 'target'],
+      'img': ['src', 'alt', 'title', 'width', 'height']
+    }
+  };
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -103,7 +113,7 @@ export default function WriteGuidePage() {
   const updateChecklist = (sectionId: string, checklistId: string, text: string) => setSections(sections.map(s => s.id === sectionId ? { ...s, checklists: s.checklists.map(c => c.id === checklistId ? { ...c, text } : c) } : s));
   const removeChecklist = (sectionId: string, checklistId: string) => setSections(sections.map(s => s.id === sectionId ? { ...s, checklists: s.checklists.filter(c => c.id !== checklistId) } : s));
 
-  const applyFormat = (sectionId: string, type: "bold" | "italic" | "link" | "image") => {
+  const applyFormat = (sectionId: string, type: "bold" | "italic" | "link" | "image" | "underline" | "list") => {
     const textarea = document.getElementById(`textarea-${sectionId}`) as HTMLTextAreaElement;
     if (!textarea) return;
 
@@ -125,6 +135,17 @@ export default function WriteGuidePage() {
       insert = `*${selection}*`;
       newCursorStart = start + 1;
       newCursorEnd = start + 1 + selection.length;
+    }
+    if (type === "underline") {
+      insert = `<u>${selection}</u>`;
+      newCursorStart = start + 3;
+      newCursorEnd = start + 3 + selection.length;
+    }
+    if (type === "list") {
+      const listText = selection || "Elemento";
+      insert = `- ${listText}`;
+      newCursorStart = start + 2;
+      newCursorEnd = start + 2 + listText.length;
     }
     if (type === "link") {
       const linkText = selection || "texto";
@@ -332,12 +353,19 @@ export default function WriteGuidePage() {
 
                       {!previewMode[sec.id] ? (
                         <div style={{ display: "flex", flexDirection: "column", border: "1px solid #ccc", borderRadius: "2px", overflow: "hidden" }}>
-                          <div style={{ display: "flex", gap: "2px", padding: "4px", backgroundColor: "#f3f4f6", borderBottom: "1px solid #ccc", alignItems: "center" }}>
+                          <div style={{ display: "flex", gap: "2px", padding: "4px", backgroundColor: "#f3f4f6", borderBottom: "1px solid #ccc", alignItems: "center", flexWrap: "wrap" }}>
                             <button onClick={() => applyFormat(sec.id, "bold")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
                               <Bold size={14} />
                             </button>
                             <button onClick={() => applyFormat(sec.id, "italic")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
                               <Italic size={14} />
+                            </button>
+                            <button onClick={() => applyFormat(sec.id, "underline")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
+                              <Underline size={14} />
+                            </button>
+                            <div style={{ width: "1px", height: "16px", backgroundColor: "#ccc", margin: "0 4px" }}></div>
+                            <button onClick={() => applyFormat(sec.id, "list")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
+                              <List size={14} />
                             </button>
                             <div style={{ width: "1px", height: "16px", backgroundColor: "#ccc", margin: "0 4px" }}></div>
                             <button onClick={() => applyFormat(sec.id, "link")} style={{ width: "40px", minWidth: "26px", height: "26px", minHeight: "26px", padding: 0, margin: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "none", border: "1px solid transparent", borderRadius: "3px" }}>
@@ -357,7 +385,7 @@ export default function WriteGuidePage() {
                         </div>
                       ) : (
                         <div style={{ width: "100%", padding: "10px", minHeight: "180px", backgroundColor: "#fff", border: "1px solid #ccc", borderRadius: "2px", overflowY: "auto" }}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{sec.text || "*Nada que mostrar todavía...*"}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}>{sec.text || "*Nada que mostrar todavía...*"}</ReactMarkdown>
                         </div>
                       )}
                     </div>
