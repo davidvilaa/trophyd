@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Eraser, Clock, Dumbbell, X, MoveLeft, MoveRight, Share } from "lucide-react";
+import { Eraser, Clock, Dumbbell, X, MoveLeft, MoveRight, House, FileEdit } from "lucide-react";
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
@@ -29,10 +29,6 @@ export default function ProfileGamesPage() {
   const [isLogging, setIsLogging] = useState(false);
   const [notificacion, setNotificacion] = useState<{ titulo: string, mensaje: string } | null>(null);
   const [isClosing, setIsClosing] = useState(false);
-
-  const [infoPos, setInfoPos] = useState({ x: 0, y: 0 });
-  const [draggingInfo, setDraggingInfo] = useState(false);
-  const isDraggingRef = useRef(false);
 
   const cargarJuegos = async () => {
     setLoading(true);
@@ -404,89 +400,24 @@ export default function ProfileGamesPage() {
           zIndex: 100000, display: "flex", flexDirection: "column",
           justifyContent: "flex-end", alignItems: "center", paddingBottom: "30px" 
         }}>
+          
           <div 
-            className="info-float-god window" 
+            className="window glass active" 
             style={{ 
-              position: "fixed", 
-              top: `calc(50vh + ${infoPos.y}px)`, 
-              left: `calc(15% + ${infoPos.x}px)`, 
-              width: "42px", height: "42px", 
-              minWidth: "42px", minHeight: "42px", 
-              padding: 0, 
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              backdropFilter: "blur(6px)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-              borderTopColor: "rgba(255, 255, 255, 0.6)",
-              borderRadius: "4px",
-              boxShadow: "0 4px 15px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.7)",
-              zIndex: 110, 
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: draggingInfo ? "grabbing" : "grab",
-              overflow: "hidden", 
-              transform: "translate(-50%, -50%)", 
-              transition: draggingInfo ? "none" : "box-shadow 0.2s ease"
-            }}
-            onPointerDown={(e) => { 
-              e.preventDefault();
-              setDraggingInfo(true); 
-              isDraggingRef.current = false;
-              
-              const startClientX = e.clientX;
-              const startClientY = e.clientY;
-              const startInfoX = infoPos.x;
-              const startInfoY = infoPos.y;
-
-              const handleMove = (moveEvent: PointerEvent) => {
-                isDraggingRef.current = true;
-                setInfoPos({
-                  x: startInfoX + (moveEvent.clientX - startClientX),
-                  y: startInfoY + (moveEvent.clientY - startClientY)
-                });
-              };
-              
-              const handleUp = () => {
-                setDraggingInfo(false);
-                window.removeEventListener("pointermove", handleMove);
-                window.removeEventListener("pointerup", handleUp);
-                setTimeout(() => { isDraggingRef.current = false; }, 50);
-              };
-              
-              window.addEventListener("pointermove", handleMove);
-              window.addEventListener("pointerup", handleUp);
-            }}
-            onPointerOver={(e) => {
-              e.currentTarget.style.boxShadow = "0 8px 25px rgba(251, 191, 36, 0.7), inset 0 1px 1px rgba(255,255,255,0.8)";
-              e.currentTarget.style.borderTopColor = "rgba(251, 191, 36, 0.8)";
-            }}
-            onPointerOut={(e) => {
-              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.7)";
-              e.currentTarget.style.borderTopColor = "rgba(255, 255, 255, 0.6)";
+              position: "absolute", top: "30px", width: "90%", maxWidth: "1100px", zIndex: 120 
             }}
           >
-            <button 
-              onClick={(e) => {
-                if (isDraggingRef.current) return;
-                router.push(`/game/${focusedGame.id}`);
-              }} 
-              style={{ 
-                background: "transparent", border: "none", boxShadow: "none",
-                color: "#1a1a2e", padding: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                width: "100%", height: "100%", cursor: draggingInfo ? "grabbing" : "pointer",
-                margin: 0, 
-              }}
-              title="Descubrir la Ficha Técnica"
-            >
-              <style>{`
-                .info-float-god:hover .rotate-icon {
-                  transform: rotate(360deg) scale(1.1);
-                  color: #fbbf24; 
-                }
-              `}</style>
-              <div className="rotate-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.4s ease, color 0.4s ease", pointerEvents: "none" }}>
-                <Share size={24} strokeWidth={3} filter="drop-shadow(0 1px 2px rgba(0,0,0,0.8))" />
+            <div className="title-bar">
+              <div className="title-bar-text" style={{ fontSize: "14px" }}>
               </div>
-            </button>
+              <div className="title-bar-controls">
+                <button aria-label="Minimize"></button>
+                <button aria-label="Maximize"></button>
+                <button aria-label="Close" onClick={() => { setFocusedGame(null); setIsLogging(false); }}></button>
+              </div>
+            </div>
           </div>
+
           <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 105 }}>
             <GameCard3D 
               coverUrl={focusedGame.portada} 
@@ -512,8 +443,9 @@ export default function ProfileGamesPage() {
           </div>
 
           <div className="window" style={{ zIndex: 110, width: "auto", padding: "10px", position: "relative" }}>
-            <div className="window-body" style={{ display: "flex", gap: "15px", alignItems: "center", margin: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <div className="window-body" style={{ display: "flex", gap: "10px", alignItems: "center", margin: 0 }}>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "0", marginRight: "10px", height: "35px" }}>
                 <button 
                   onClick={() => {
                     const consolas = focusedGame.todasLasConsolas?.length > 0 ? focusedGame.todasLasConsolas : ["pc"];
@@ -521,7 +453,7 @@ export default function ProfileGamesPage() {
                     const prevIndex = index <= 0 ? consolas.length - 1 : index - 1;
                     setConsolaFocus(consolas[prevIndex]);
                   }}
-                  style={{ minWidth: "30px", cursor: "pointer", padding: "2px" }}
+                  style={{ width: "35px", height: "100%", cursor: "pointer", padding: 0, margin: 0, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box" }}
                 >
                   <MoveLeft size={18} />
                 </button>
@@ -529,7 +461,7 @@ export default function ProfileGamesPage() {
                 <select 
                   value={consolaFocus || "pc"} 
                   onChange={(e) => setConsolaFocus(e.target.value)}
-                  style={{ minWidth: "160px", cursor: "pointer", padding: "3px" }}
+                  style={{ width: "160px", height: "100%", cursor: "pointer", padding: "0 10px", margin: 0, boxSizing: "border-box", borderRadius: 0 }}
                 >
                   {focusedGame.todasLasConsolas && focusedGame.todasLasConsolas.length > 0 ? (
                     focusedGame.todasLasConsolas.map((c: string) => (
@@ -549,29 +481,29 @@ export default function ProfileGamesPage() {
                     const nextIndex = index >= consolas.length - 1 ? 0 : index + 1;
                     setConsolaFocus(consolas[nextIndex]);
                   }}
-                  style={{ minWidth: "30px", cursor: "pointer", padding: "2px" }}
+                  style={{ width: "35px", height: "100%", cursor: "pointer", padding: 0, margin: 0, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box" }}
                 >
                   <MoveRight size={18} />
                 </button>
               </div>
 
               <button 
-                onClick={() => setIsLogging(!isLogging)}
-                style={{ fontWeight: "bold", padding: "5px 15px", cursor: "pointer" }}
+                onClick={() => router.push(`/game/${focusedGame.id}`)}
+                style={{ minWidth: "35px", height: "35px", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box" }}
+                title="Ver Ficha Técnica"
               >
-                {isLogging ? "Volver a Portada" : "Editar Juego"}
+                <House size={18} />
               </button>
 
               <button 
-                onClick={() => { setFocusedGame(null); setIsLogging(false); }}
-                style={{ 
-                  minWidth: "40px", padding: "4px", cursor: "pointer", color: "#dc2626",
-                  display: "flex", alignItems: "center", justifyContent: "center"
-                }}
-                title="Cerrar"
+                onClick={() => setIsLogging(!isLogging)}
+                className={isLogging ? "active" : ""}
+                style={{ minWidth: "35px", height: "35px", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: isLogging ? "#e3e3e3" : "", boxShadow: isLogging ? "inset 0 2px 4px rgba(0,0,0,0.25)" : "", boxSizing: "border-box" }}
+                title={isLogging ? "Volver a Portada" : "Editar Juego"}
               >
-                <X size={20} strokeWidth={4} />
+                {isLogging ? <MoveLeft size={18} /> : <FileEdit size={18} />}
               </button>
+
             </div>
           </div>
         </div>
