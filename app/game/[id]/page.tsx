@@ -8,6 +8,7 @@ import { Canvas } from "@react-three/fiber";
 import { PresentationControls, Environment, ContactShadows } from "@react-three/drei";
 import GameCard3D from "@/components/gameCard3D";
 import { View } from "@react-three/drei";
+import { useNotification } from "@/components/NotificationProvider";
 
 export default function GamePage() {
   const params = useParams();
@@ -38,6 +39,8 @@ export default function GamePage() {
   const [followingVotes, setFollowingVotes] = useState<any[]>([]);
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const fetchGameInfo = async () => {
@@ -324,7 +327,10 @@ export default function GamePage() {
               <button 
                 className="default aero-btn-list"
                 onClick={() => {
-                  if (!currentUserId) return alert("Debes iniciar sesión para escribir una guía.");
+                  if (!currentUserId) {
+                    showNotification("Debes iniciar sesión para escribir una guía.", "info");
+                    return;
+                  }
                   router.push(`/game/${gameId}/write-guide`);
                 }}
                 style={{ padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}

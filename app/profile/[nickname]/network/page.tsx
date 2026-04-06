@@ -93,7 +93,6 @@ export default function ProfileNetworkPage() {
       }
     } catch (error: any) {
       console.error("Error en la network:", error);
-      alert("¡Supabase ha bloqueado el follow! Motivo: " + error.message);
     }
   };
 

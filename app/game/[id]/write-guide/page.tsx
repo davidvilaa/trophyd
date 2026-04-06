@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
+import { useNotification } from "@/components/NotificationProvider";
 
 export default function WriteGuidePage() {
   const params = useParams();
@@ -27,6 +28,8 @@ export default function WriteGuidePage() {
 
   const searchParams = useSearchParams();
   const guideIdFromUrl = searchParams.get("guideId");
+
+  const { showNotification } = useNotification();
 
   const [sections, setSections] = useState([
     { id: Date.now().toString(), title: "Introducción", text: "", checklists: [{ id: Date.now().toString() + "c", text: "" }] }
@@ -178,7 +181,10 @@ export default function WriteGuidePage() {
   };
 
   const handleSave = async () => {
-    if (!guideInfo.title) return alert("¡Ponle un título!");
+    if (!guideInfo.title) {
+      showNotification("Ponle un título", "debes ponerle un título a tu guía para poder guardarla.");
+      return;
+    }
     setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -214,7 +220,7 @@ export default function WriteGuidePage() {
         const checksToInsert = sec.checklists.filter(c => c.text.trim() !== "").map(c => ({ guide_section_id: newSec.id, text: c.text }));
         if (checksToInsert.length > 0) await supabase.from("checklist").insert(checksToInsert);
       }
-      alert("¡Guardado!");
+      showNotification("¡Guardado!", "Tu guía ha sido guardada exitosamente.");
     } catch (error) {
       console.error(error);
     } finally {

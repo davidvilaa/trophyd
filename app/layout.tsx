@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
+// @ts-ignore
 import "./globals.css";
+// @ts-ignore
 import "7.css/dist/7.css";
 import Navbar from "@/components/navbar";
+import { NotificationProvider } from "@/components/NotificationProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,10 +32,12 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark">
       <body className={inter.className}>
-        <Navbar /> {}
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <NotificationProvider>
+          <Navbar />
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </NotificationProvider>
       </body>
     </html>
   );

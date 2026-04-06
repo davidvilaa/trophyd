@@ -97,7 +97,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
       }
     } catch (error: any) {
       console.error("Error al hacer toggle follow:", error);
-      alert("¡Supabase ha bloqueado el follow! Motivo: " + error.message);
     } finally {
       setIsToggling(false);
     }

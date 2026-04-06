@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { ArrowLeft, Clock, Dumbbell, Award, CheckSquare, Square } from "lucide-react";
+import { useNotification } from "@/components/NotificationProvider";
 
 export default function GuideReadingPage() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function GuideReadingPage() {
   const [sections, setSections] = useState<any[]>([]);
   const [markedChecks, setMarkedChecks] = useState<Set<string>>(new Set());
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const { showNotification } = useNotification();
 
   const sanitizeSchema = {
     tagNames: ['u', 'br', 'strong', 'em', 'p', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'img', 'a'],
@@ -89,7 +91,10 @@ export default function GuideReadingPage() {
   }, [gameId, guideId]);
 
   const toggleCheck = async (checklistId: string) => {
-    if (!currentUserId) return alert("Debes iniciar sesión para guardar tu progreso.");
+    if (!currentUserId) {
+      showNotification("ERROR", "Debes iniciar sesión para guardar tu progreso.");
+      return;
+    }
 
     const isMarked = markedChecks.has(checklistId);
     const newSet = new Set(markedChecks);
