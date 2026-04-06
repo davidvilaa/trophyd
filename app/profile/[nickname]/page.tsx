@@ -7,7 +7,7 @@ import { Clock, Dumbbell, Award, X, MoveLeft, MoveRight, House, FileEdit } from 
 import GameCard3D from "@/components/gameCard3D";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
-import { platform } from "os";
+import { useNotification } from "@/components/NotificationProvider";
 
 export default function ProfileContentPage() {
   const router = useRouter();
@@ -26,9 +26,9 @@ export default function ProfileContentPage() {
   const [focusedGame, setFocusedGame] = useState<any | null>(null);
   const [consolaFocus, setConsolaFocus] = useState<string | null>("pc");
   const [isLogging, setIsLogging] = useState(false);
-  const [notificacion, setNotificacion] = useState<{ titulo: string, mensaje: string } | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const comprobarSesion = async () => {
@@ -131,14 +131,6 @@ export default function ProfileContentPage() {
     }
     return () => { document.body.style.overflow = "auto"; };
   }, [focusedGame]);
-
-  const cerrarNotificacion = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setNotificacion(null);
-      setIsClosing(false);
-    }, 500);
-  };
 
   const favoritosMostrados = Array(5).fill(null).map((_, index) => favoritos[index] || null);
   const escalas = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
@@ -453,15 +445,14 @@ export default function ProfileContentPage() {
               onSaveSuccess={(action) => {
                 setIsLogging(false); 
                 setFocusedGame(null);
-                cargarDatosPerfil();
-                setNotificacion({
-                  titulo: action === "deleted" ? "¡Juego Borrado!" : "¡Juego Actualizado!",
-                  mensaje: action === "deleted" 
+                
+                showNotification(
+                  action === "deleted" ? "¡Juego Borrado!" : "¡Juego Actualizado!",
+                  action === "deleted" 
                     ? `Has eliminado ${focusedGame.titulo} de tu colección.` 
                     : `Has actualizado ${focusedGame.titulo} con éxito.`
-                });
-                setTimeout(() => cerrarNotificacion(), 3000);
-              }} 
+                );
+              }}
             />
           </div>
 
@@ -539,24 +530,6 @@ export default function ProfileContentPage() {
       >
         <View.Port />
       </Canvas>
-
-      {notificacion && (
-        <div style={{ position: "fixed", top: "80px", left: "20px", zIndex: 9999, opacity: isClosing ? 0 : 1, transition: "opacity 0.5s ease-in-out" }}>
-          <div role="tooltip" style={{ position: "relative", width: "300px", maxWidth: "90vw", backgroundColor: "#ffffe1", border: "1px solid #000", padding: "10px", boxShadow: "2px 2px 5px rgba(0,0,0,0.2)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-              <span style={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: "5px", color: "#000", fontSize: "14px" }}>
-                {notificacion.titulo}
-              </span>
-              <button onClick={() => setNotificacion(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                <X size={14} strokeWidth={3} />
-              </button>
-            </div>
-            <p style={{ margin: 0, fontSize: "12px", color: "#333", lineHeight: "1.4" }}>
-              {notificacion.mensaje}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
