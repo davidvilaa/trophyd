@@ -179,7 +179,7 @@ export default function FeedWindow() {
           
           <div style={{ padding: "10px" }}>
             {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando la red... ⏳</div>
+              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando...</div>
             ) : activeTab === "friends" && !currentUserId ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "12px" }}>
                 Inicia sesión para ver la actividad de tus amigos.

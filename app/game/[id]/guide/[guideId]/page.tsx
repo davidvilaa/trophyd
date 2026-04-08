@@ -46,8 +46,6 @@ export default function GuideReadingPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        console.log("Iniciando carga de la guía:", guideId);
-        
         const { data: { session } } = await supabase.auth.getSession();
         let userId = session?.user?.id || null;
         if (userId) setCurrentUserId(userId);
@@ -59,7 +57,10 @@ export default function GuideReadingPage() {
           .from("guides")
           .select("*, profiles!guides_user_id_fkey(nickname)")
           .eq("id", guideId)
-          .single();
+          .maybeSingle();
+
+        if (guideErr) throw guideErr;
+        if (guide) setGuideData(guide);
 
         const { data: secs, error: secsErr } = await supabase
           .from("guide_sections")
@@ -67,7 +68,7 @@ export default function GuideReadingPage() {
           .eq("guide_id", guideId)
           .order("created_at", { ascending: true });
 
-        if (secsErr) console.error("ERROR EN BBDD", secsErr);
+        if (secsErr) throw secsErr;
         if (secs) setSections(secs);
 
         const { count, error: countErr } = await supabase
@@ -75,7 +76,7 @@ export default function GuideReadingPage() {
           .select("*", { count: "exact", head: true })
           .eq("guide_id", guideId);
           
-        if (countErr) console.error("ERROR EN BBDD", countErr);
+        if (countErr) throw countErr;
         if (count !== null) setLikeCount(count);
 
         if (userId) {
@@ -84,7 +85,7 @@ export default function GuideReadingPage() {
             .select("checklist_id")
             .eq("user_id", userId);
           
-          if (checksErr) console.error("ERROR EN BBD", checksErr);
+          if (checksErr) console.error(checksErr);
           if (userChecks) setMarkedChecks(new Set(userChecks.map(c => c.checklist_id)));
 
           const { data: likeData, error: likeErr } = await supabase
@@ -94,11 +95,12 @@ export default function GuideReadingPage() {
             .eq("user_id", userId)
             .maybeSingle();
 
-          if (likeErr) console.error("ERROR EN LA BBDD:", likeErr);
+          if (likeErr) throw likeErr;
           if (likeData) setIsLiked(true);
         }
+
       } catch (error) {
-        console.error("ERROR EN FETCHDATA:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -128,7 +130,7 @@ export default function GuideReadingPage() {
         if (error) throw error;
       }
     } catch (error) {
-      console.error("Error al hacer toggle en Like:", error);
+      console.error(error);
       setLikeCount(prev => isLiked ? prev + 1 : prev - 1);
       setIsLiked(isLiked);
     } finally {
@@ -182,21 +184,12 @@ export default function GuideReadingPage() {
   };
 
   const getRetroBadgeStyle = (bgColor: string) => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "6px 16px",
+    display: "flex", alignItems: "center", gap: "8px", padding: "6px 16px",
     backgroundColor: bgColor,
     backgroundImage: "linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%)",
-    backdropFilter: "blur(6px)",
-    WebkitBackdropFilter: "blur(6px)",
-    border: "1px solid rgba(255, 255, 255, 0.3)",
-    borderTopColor: "rgba(255, 255, 255, 0.7)",
-    borderBottomColor: "rgba(0, 0, 0, 0.8)",
-    borderRadius: "6px",
-    color: "#fff",
-    fontSize: "14px",
-    fontWeight: "bold",
+    backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+    border: "1px solid rgba(255, 255, 255, 0.3)", borderTopColor: "rgba(255, 255, 255, 0.7)", borderBottomColor: "rgba(0, 0, 0, 0.8)",
+    borderRadius: "6px", color: "#fff", fontSize: "14px", fontWeight: "bold",
     boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -1px 3px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.4)",
     textShadow: "0 1px 2px rgba(0,0,0,0.9)",
   });
@@ -205,7 +198,7 @@ export default function GuideReadingPage() {
   const progressPercent = totalChecks === 0 ? 0 : Math.round((markedChecks.size / totalChecks) * 100);
 
   if (loading) return <main style={{ minHeight: "100vh", backgroundColor: "#f3f4f6" }}></main>;
-  if (!guideData) return <main style={{ padding: "50px", textAlign: "center", fontSize: "20px" }}>Guía no encontrada. Abre F12 para ver el error.</main>;
+  if (!guideData) return <main style={{ padding: "50px", textAlign: "center", fontSize: "20px" }}>Guía no encontrada.</main>;
 
   return (
     <main style={{ minHeight: "100vh", backgroundColor: "#f3f4f6", paddingBottom: "50px" }}>
@@ -403,8 +396,7 @@ export default function GuideReadingPage() {
                 })
               )}
             </div>
-            <hr style={{ width: "100%", border: "none", borderBottom: "1px solid #e5e7eb", marginTop: "20px" }} />
-        
+            <hr style={{ width: "100%", border: "none", borderBottom: "1px solid #e5e7eb", marginTop: "20px" }} />        
             <div style={{ textAlign: "center", fontSize: "14px", color: "#64748b", paddingBottom: "10px" }}>
               por <span style={{ color: "#3b82f6", fontWeight: "bold"}}>{guideData.profiles?.nickname}</span>
             </div>
