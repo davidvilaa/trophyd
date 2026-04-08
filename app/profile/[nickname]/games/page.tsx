@@ -363,7 +363,7 @@ export default function ProfileGamesPage() {
                       </div>
                       <div className="embedded-badge" title="Difficulty" style={{ backgroundColor: getDifficultyColor(juego.difficulty) }}>
                         <Dumbbell size={16} />
-                        <span>{juego.difficulty || "Default"}</span>
+                        <span>{juego.difficulty ? juego.difficulty : "--"}</span>
                       </div>
                     </div>
                     <div className="stars-row">

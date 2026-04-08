@@ -377,7 +377,7 @@ export default function ProfileContentPage() {
                         </div>
                         <div className="embedded-badge" title="Difficulty" style={{ backgroundColor: getDifficultyColor(fav.difficulty) }}>
                           <Dumbbell size={16} />
-                          <span>{fav.difficulty || "Default"}</span>
+                          <span>{fav.difficulty ? fav.difficulty : "--"}</span>
                         </div>
                       </div>
 

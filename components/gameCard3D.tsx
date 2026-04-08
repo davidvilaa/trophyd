@@ -84,7 +84,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
   const [hoverRating, setHoverRating] = useState(0); 
   const [isFavorite, setIsFavorite] = useState(false);
   const [status, setStatus] = useState("completed");
-  const [difficulty, setDifficulty] = useState(5);
+  const [difficulty, setDifficulty] = useState(0);
   const [timePlayed, setTimePlayed] = useState(0);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -104,7 +104,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
           if (data) {
             setIsExisting(true);
             setStatus(data.status || "completed");
-            setDifficulty(data.difficulty || 5);
+            setDifficulty(data.difficulty || 0);
             setRating(data.rating || 0);
             setTimePlayed(data.time_played || 0);
             setIsFavorite(data.isFavorite || false);
@@ -117,7 +117,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
           } else {
             setIsExisting(false);
             setStatus("completed");
-            setDifficulty(5);
+            setDifficulty(0);
             setRating(0);
             setTimePlayed(0);
             setIsFavorite(false);
@@ -328,9 +328,9 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
           user_id: userId,
           game_id: juego.id,
           status: status,
-          difficulty: difficulty,
+          difficulty: difficulty === 0 ? null : difficulty,
           rating: rating,
-          time_played: timePlayed,
+          time_played: timePlayed === 0 ? null : timePlayed,
           isFavorite: isFavorite, 
           start_date: startDate || null,
           finish_date: endDate || null,
@@ -424,7 +424,7 @@ function Model({ url, coverUrl, hovered, consola, isFocused, isLogging, juego, u
                   
                   <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                     <label>Dificultad:</label>
-                    <input type="number" min="1" max="10" value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} style={{ width: "40px" }} />
+                    <input type="number" min="0" max="10" value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} style={{ width: "40px" }} />
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
