@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Draggable from "react-draggable";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Activity, Trophy, Play, Pause, XCircle, Heart, Clock } from "lucide-react";
+import { Activity, Trophy, Play, Pause, XCircle, Gift, Clock } from "lucide-react";
+import MiniGameCaseCard from "@/components/cards/MINIgameCard";
 
 const timeAgo = (dateString: string) => {
   if (!dateString) return "";
@@ -33,7 +34,7 @@ const getStatusConfig = (status: string) => {
     case 'dropped': 
       return { text: 'ha abandonado', color: "#a55c5c", icon: <XCircle size={14} /> };
     case 'wishlist': 
-      return { text: 'quiere jugar a', color: "#8e7cc3", icon: <Heart size={14} /> };
+      return { text: 'quiere jugar a', color: "#8e7cc3", icon: <Gift size={14} /> };
     default: 
       return { text: 'ha logueado', color: "#636e72", icon: <Activity size={14} /> };
   }
@@ -67,17 +68,22 @@ export default function FeedWindow() {
     const fetchFeed = async () => {
       setLoading(true);
 
+      const baseQuery = `
+        user_id,
+        game_id,
+        status,
+        created_at,
+        rating,
+        difficulty,
+        time_played,
+        profiles ( nickname, pfp_url ),
+        games ( id, title, cover_image_url )
+      `;
+
       if (activeTab === "global") {
         const { data, error } = await supabase
           .from('user_games')
-          .select(`
-            user_id,
-            game_id,
-            status,
-            created_at,
-            profiles ( nickname, pfp_url ),
-            games ( id, title, cover_image_url )
-          `)
+          .select(baseQuery)
           .order('created_at', { ascending: false })
           .limit(20);
 
@@ -99,14 +105,7 @@ export default function FeedWindow() {
 
         const { data, error } = await supabase
           .from('user_games')
-          .select(`
-            user_id,
-            game_id,
-            status,
-            created_at,
-            profiles ( nickname, pfp_url ),
-            games ( id, title, cover_image_url )
-          `)
+          .select(baseQuery)
           .in('user_id', targetIds)
           .order('created_at', { ascending: false })
           .limit(20);
@@ -180,7 +179,7 @@ export default function FeedWindow() {
           
           <div style={{ padding: "10px" }}>
             {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando...</div>
+              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando la red... ⏳</div>
             ) : activeTab === "friends" && !currentUserId ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "12px" }}>
                 Inicia sesión para ver la actividad de tus amigos.
@@ -190,7 +189,7 @@ export default function FeedWindow() {
                 Aún no hay actividad.
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "500px", overflowY: "auto", paddingRight: "5px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "470px", overflowY: "auto", paddingRight: "5px" }}>
                 {feed.map((item) => {
                   if (!item.profiles || !item.games) return null;
 
@@ -208,12 +207,11 @@ export default function FeedWindow() {
                         boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
                       }}
                     >
-                      <div style={{ width: "50px", height: "70px", flexShrink: 0, backgroundColor: "#000", border: "1px solid #999", borderRadius: "2px", overflow: "hidden", boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }}>
-                        {item.games.cover_image_url ? (
-                          <img src={item.games.cover_image_url} alt={item.games.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🎮</div>
-                        )}
+                      <div style={{ width: "50px", flexShrink: 0 }}>
+                        <MiniGameCaseCard 
+                          gameData={item} 
+                          onClick={() => window.location.href = `/game/${item.games.id}`}
+                        />
                       </div>
 
                       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -242,6 +240,7 @@ export default function FeedWindow() {
                             {item.games.title}
                           </Link>
                         </div>
+
                       </div>
                     </div>
                   );
