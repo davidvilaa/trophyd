@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Eraser, Clock, Dumbbell, X, MoveLeft, MoveRight, House, FileEdit } from "lucide-react";
+import { Eraser, X, MoveLeft, MoveRight, House, FileEdit } from "lucide-react";
 import GameCard3D from "@/components/gameCard3D";
+import GameCaseCard from "@/components/cards/gameCard";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
 import { useNotification } from "@/components/NotificationProvider";
@@ -29,7 +30,7 @@ export default function ProfileGamesPage() {
   const [consolaFocus, setConsolaFocus] = useState<string | null>("pc");
   const [isLogging, setIsLogging] = useState(false);
 
-   const { showNotification } = useNotification();
+  const { showNotification } = useNotification();
 
   const cargarJuegos = async () => {
     setLoading(true);
@@ -103,30 +104,6 @@ export default function ProfileGamesPage() {
   const escalas = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
   const statuses = ["completed", "playing", "paused", "dropped", "wishlist"];
 
-  const getDifficultyColor = (diff: number | null | undefined) => {
-    if (!diff) return "rgba(20, 30, 40, 0.5)";
-    const d = Math.round(Number(diff));
-    if (d <= 3) return "rgba(21, 128, 61, 0.6)";
-    if (d <= 5) return "rgba(101, 163, 13, 0.6)";
-    if (d <= 7) return "rgba(202, 138, 4, 0.6)";
-    if (d === 8) return "rgba(194, 65, 12, 0.6)";
-    if (d === 9) return "rgba(185, 28, 28, 0.6)";
-    return "rgba(127, 29, 29, 0.8)";
-  };
-
-  const getTimeColor = (hours: number | null | undefined) => {
-    if (!hours) return "rgba(20, 30, 40, 0.5)"; 
-    const h = Number(hours);
-    if (h <= 5) return "rgba(21, 128, 61, 0.6)";
-    if (h <= 10) return "rgba(101, 163, 13, 0.6)";
-    if (h <= 30) return "rgba(202, 138, 4, 0.6)";
-    if (h <= 50) return "rgba(217, 119, 6, 0.6)";
-    if (h <= 80) return "rgba(194, 65, 12, 0.6)";
-    if (h <= 100) return "rgba(154, 52, 18, 0.6)";
-    if (h <= 300) return "rgba(185, 28, 28, 0.6)";
-    return "rgba(127, 29, 29, 0.8)";
-  };
-
   if (loading) return <div style={{ padding: "20px", textAlign: "center" }}>Cargando colección...</div>;
 
   return (
@@ -160,127 +137,6 @@ export default function ProfileGamesPage() {
           .reset-btn-narrow.active {
             cursor: pointer;
             opacity: 1;
-          }
-          
-          .game-case-container {
-            position: relative;
-            cursor: pointer;
-            perspective: 1000px;
-            aspect-ratio: 3/4;
-            z-index: 1;
-          }
-
-          .game-case {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background-size: cover;
-            background-position: center;
-            border: 2px inset #fff;
-            background-color: #e5e7eb;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transform-style: preserve-3d;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-            z-index: 10;
-          }
-
-          .game-case-container:hover {
-            z-index: 20;
-          }
-
-          .game-case-container:hover .game-case {
-            transform: rotateX(8deg) rotateY(-8deg) scale(1.15) translateZ(30px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
-          }
-
-          .case-overlay-container {
-            position: absolute;
-            top: 0; bottom: 0; left: 0; right: 0;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            transform-style: preserve-3d;
-            pointer-events: none;
-          }
-
-          .game-case-container:hover .case-overlay-container {
-            opacity: 1;
-          }
-
-          .badges-row {
-            position: absolute;
-            top: 8px;
-            left: 0; right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            padding: 0 8px;
-            transform: translateZ(30px);
-            transform-style: preserve-3d;
-          }
-
-          .embedded-badge {
-            flex: 1 1 0%;
-            justify-content: center;
-            background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-top-color: rgba(255, 255, 255, 0.7); 
-            border-bottom-color: rgba(0, 0, 0, 0.8);   
-            border-radius: 6px;
-            color: #fff;
-            padding: 2px 4px;
-            font-size: 10px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -1px 3px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.5);
-            text-transform: capitalize;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-          }
-
-          .embedded-badge svg {
-            stroke-width: 2.5px;
-            color: #fff;
-            flex-shrink: 0;
-            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
-          }
-
-          .stars-row {
-            position: absolute;
-            bottom: 2px;
-            left: 50%;
-            transform: translateX(-50%) translateZ(40px); 
-            
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            font-size: 2.2rem;
-            color: rgba(255, 255, 255, 0.4); 
-            width: max-content;
-            transform-style: preserve-3d;
-            pointer-events: auto;
-          }
-
-          .stars-row span {
-            transition: color 0.15s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.15s ease;
-            filter: drop-shadow(0 5px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 2px rgba(255,255,255,0.3));
-            cursor: pointer;
-          }
-
-          .stars-row span:hover {
-            transform: translateY(-6px) translateZ(20px) scale(1.3);
-            color: #fbbf24;
-            filter: drop-shadow(0 0 12px rgba(251, 191, 36, 1)) drop-shadow(0 8px 8px rgba(0,0,0,0.9));
-          }
-
-          .stars-row span.active {
-            color: #fbbf24; 
-            filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.7)) drop-shadow(0 3px 5px rgba(0,0,0,0.9));
           }
         `}</style>
 
@@ -335,10 +191,9 @@ export default function ProfileGamesPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "15px", paddingTop: "10px" }}>
           {processedGames.length > 0 ? (
             processedGames.map((juego) => (
-              <div 
-                key={juego.game_id} 
-                className="game-case-container" 
-                title={juego.games.title}
+              <GameCaseCard 
+                key={juego.game_id}
+                gameData={juego}
                 onClick={() => {
                   setFocusedGame({
                     id: juego.game_id,
@@ -349,36 +204,7 @@ export default function ProfileGamesPage() {
                   });
                   setIsLogging(true);
                 }}
-              >
-                <div 
-                  className="game-case" 
-                  style={{ backgroundImage: `url(${juego.games.cover_image_url})` }}
-                >
-                  <div className="case-overlay-container">
-                    
-                    <div className="badges-row">
-                      <div className="embedded-badge" title="Time Played" style={{ backgroundColor: getTimeColor(juego.time_played) }}>
-                        <Clock size={16} />
-                        <span>{juego.time_played ? `${juego.time_played}h` : "--h"}</span>
-                      </div>
-                      <div className="embedded-badge" title="Difficulty" style={{ backgroundColor: getDifficultyColor(juego.difficulty) }}>
-                        <Dumbbell size={16} />
-                        <span>{juego.difficulty ? juego.difficulty : "--"}</span>
-                      </div>
-                    </div>
-                    <div className="stars-row">
-                      {[1, 2, 3, 4, 5].map((starIndex) => (
-                        <span 
-                          key={starIndex}
-                          className={juego.rating && juego.rating >= starIndex ? "active" : ""}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              />
             ))
           ) : (
             <p style={{ gridColumn: "1 / -1", textAlign: "center", color: "#666", padding: "20px 0" }}>No se encontraron juegos con estos filtros.</p>
@@ -396,13 +222,10 @@ export default function ProfileGamesPage() {
           
           <div 
             className="window glass active" 
-            style={{ 
-              position: "absolute", top: "30px", width: "90%", maxWidth: "1100px", zIndex: 120 
-            }}
+            style={{ position: "absolute", top: "30px", width: "90%", maxWidth: "1100px", zIndex: 120 }}
           >
             <div className="title-bar">
-              <div className="title-bar-text" style={{ fontSize: "14px" }}>
-              </div>
+              <div className="title-bar-text" style={{ fontSize: "14px" }}></div>
               <div className="title-bar-controls">
                 <button aria-label="Minimize"></button>
                 <button aria-label="Maximize"></button>
@@ -423,7 +246,6 @@ export default function ProfileGamesPage() {
               onSaveSuccess={(action) => {
                 setIsLogging(false); 
                 setFocusedGame(null);
-                
                 showNotification(
                   action === "deleted" ? "¡Juego Borrado!" : "¡Juego Actualizado!",
                   action === "deleted" 
