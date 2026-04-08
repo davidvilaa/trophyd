@@ -119,15 +119,7 @@ export default function GamePage() {
       try {
         const { data } = await supabase
           .from("guides")
-          .select(`
-            id, 
-            title, 
-            average_time, 
-            average_difficulty,
-            cover_url, 
-            user_id, 
-            profiles (nickname)
-          `)
+          .select(`id, title, average_time, average_difficulty, cover_url, user_id, profiles!guides_user_id_fkey (nickname)`)
           .eq("game_id", gameId)
           .order("created_at", { ascending: false });
 

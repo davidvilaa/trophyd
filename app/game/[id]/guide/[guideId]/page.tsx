@@ -23,6 +23,11 @@ export default function GuideReadingPage() {
   const [sections, setSections] = useState<any[]>([]);
   const [markedChecks, setMarkedChecks] = useState<Set<string>>(new Set());
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
+
   const { showNotification } = useNotification();
 
   const sanitizeSchema = {
@@ -41,47 +46,59 @@ export default function GuideReadingPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
+        console.log("Iniciando carga de la guía:", guideId);
+        
         const { data: { session } } = await supabase.auth.getSession();
-        let userId = null;
-        if (session) {
-          userId = session.user.id;
-          setCurrentUserId(userId);
-        }
+        let userId = session?.user?.id || null;
+        if (userId) setCurrentUserId(userId);
 
         const res = await fetch(`/api/igdb/game?id=${gameId}`);
-        if (res.ok) {
-          const gData = await res.json();
-          setGameData(gData);
-        }
+        if (res.ok) setGameData(await res.json());
 
-        const { data: guide } = await supabase
+        const { data: guide, error: guideErr } = await supabase
           .from("guides")
-          .select("*, profiles(nickname)")
+          .select("*, profiles!guides_user_id_fkey(nickname)")
           .eq("id", guideId)
           .single();
-        
-        if (guide) setGuideData(guide);
 
-        const { data: secs } = await supabase
+        const { data: secs, error: secsErr } = await supabase
           .from("guide_sections")
           .select(`id, title, text, checklist (id, text)`)
           .eq("guide_id", guideId)
           .order("created_at", { ascending: true });
 
+        if (secsErr) console.error("ERROR EN BBDD", secsErr);
         if (secs) setSections(secs);
 
+        const { count, error: countErr } = await supabase
+          .from("guide_likes")
+          .select("*", { count: "exact", head: true })
+          .eq("guide_id", guideId);
+          
+        if (countErr) console.error("ERROR EN BBDD", countErr);
+        if (count !== null) setLikeCount(count);
+
         if (userId) {
-          const { data: userChecks } = await supabase
+          const { data: userChecks, error: checksErr } = await supabase
             .from("user_checklist")
             .select("checklist_id")
             .eq("user_id", userId);
           
-          if (userChecks) {
-            setMarkedChecks(new Set(userChecks.map(c => c.checklist_id)));
-          }
+          if (checksErr) console.error("ERROR EN BBD", checksErr);
+          if (userChecks) setMarkedChecks(new Set(userChecks.map(c => c.checklist_id)));
+
+          const { data: likeData, error: likeErr } = await supabase
+            .from("guide_likes")
+            .select("user_id")
+            .eq("guide_id", guideId)
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          if (likeErr) console.error("ERROR EN LA BBDD:", likeErr);
+          if (likeData) setIsLiked(true);
         }
       } catch (error) {
-        console.error(error);
+        console.error("ERROR EN FETCHDATA:", error);
       } finally {
         setLoading(false);
       }
@@ -89,6 +106,35 @@ export default function GuideReadingPage() {
 
     if (guideId) fetchData();
   }, [gameId, guideId]);
+
+  const toggleLike = async () => {
+    if (!currentUserId) {
+      showNotification("Error", "Debes iniciar sesión para dar me gusta a una guía.");
+      return;
+    }
+    if (isTogglingLike) return;
+
+    setIsTogglingLike(true);
+    try {
+      if (isLiked) {
+        setLikeCount(prev => prev - 1);
+        setIsLiked(false);
+        const { error } = await supabase.from("guide_likes").delete().eq("guide_id", guideId).eq("user_id", currentUserId);
+        if (error) throw error;
+      } else {
+        setLikeCount(prev => prev + 1);
+        setIsLiked(true);
+        const { error } = await supabase.from("guide_likes").insert({ guide_id: guideId, user_id: currentUserId });
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error("Error al hacer toggle en Like:", error);
+      setLikeCount(prev => isLiked ? prev + 1 : prev - 1);
+      setIsLiked(isLiked);
+    } finally {
+      setIsTogglingLike(false);
+    }
+  };
 
   const toggleCheck = async (checklistId: string) => {
     if (!currentUserId) {
@@ -159,7 +205,7 @@ export default function GuideReadingPage() {
   const progressPercent = totalChecks === 0 ? 0 : Math.round((markedChecks.size / totalChecks) * 100);
 
   if (loading) return <main style={{ minHeight: "100vh", backgroundColor: "#f3f4f6" }}></main>;
-  if (!guideData) return <main style={{ padding: "50px", textAlign: "center" }}>Guía no encontrada.</main>;
+  if (!guideData) return <main style={{ padding: "50px", textAlign: "center", fontSize: "20px" }}>Guía no encontrada. Abre F12 para ver el error.</main>;
 
   return (
     <main style={{ minHeight: "100vh", backgroundColor: "#f3f4f6", paddingBottom: "50px" }}>
@@ -195,13 +241,34 @@ export default function GuideReadingPage() {
             }
           `}</style>
 
-          <ul role="menubar" style={{ display: "flex", alignItems: "center", fontSize: "14px", position: "relative", marginBottom: 0 }}>
-            <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}`)} style={{ gap: "6px", borderRight: "1px solid #ccc", marginRight: "5px", zIndex: 10 }}>
-              <ArrowLeft size={14} /> Volver al Juego
-            </li>
+          <ul role="menubar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "14px", position: "relative", marginBottom: 0 }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <li role="menuitem" tabIndex={0} onClick={() => router.push(`/game/${gameId}`)} style={{ gap: "6px", borderRight: "1px solid #ccc", marginRight: "5px", zIndex: 10 }}>
+                <ArrowLeft size={14} /> Volver al Juego
+              </li>
+            </div>
             
             <div style={{ position: "absolute", left: 0, right: 0, textAlign: "center", pointerEvents: "none", fontWeight: "bold", color: "#000" }}>
               {guideData.title}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", zIndex: 10, paddingRight: "10px", gap: "6px" }}>
+              <span style={{ fontSize: "13px", color: "#444", fontWeight: "bold" }}>{likeCount}</span>
+              <button 
+                type="button"
+                onClick={toggleLike}
+                disabled={isTogglingLike}
+                style={{ 
+                  background: "transparent", border: "none", boxShadow: "none", minWidth: "auto",
+                  fontSize: "24px", lineHeight: "1", cursor: "pointer", padding: "0 2px",
+                  color: isLiked ? "#dc2626" : "#9ca3af",
+                  transform: isLiked ? "scale(1.15)" : "scale(1)",
+                  transition: "all 0.2s ease"
+                }}
+                title={isLiked ? "Quitar me gusta" : "Dar me gusta"}
+              >
+                ♥
+              </button>
             </div>
           </ul>
 

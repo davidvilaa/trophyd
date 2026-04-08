@@ -31,7 +31,7 @@ export default function ProfileGuidesPage() {
 
         const { data: guidesData } = await supabase
           .from("guides")
-          .select(`id, title, average_time, average_difficulty, cover_url, user_id, games (id, title, cover_image_url)`)
+          .select(`id, title, average_time, average_difficulty, cover_url, user_id, games (id, title, cover_image_url), profiles!guides_user_id_fkey (nickname)`)
           .eq("user_id", profile.id)
           .order("created_at", { ascending: false });
 
