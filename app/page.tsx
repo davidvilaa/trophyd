@@ -1,4 +1,5 @@
-import FeedWindow from "@/components/windows/feed";
+import Feed from "@/components/windows/feed";
+import TrendingGuides from "@/components/windows/trendingGuides";
 
 export default function Home() {
   return (
@@ -11,7 +12,8 @@ export default function Home() {
       `}</style>
       
       <main className="h-screen bg-[url('https://wallpapers.com/images/hd/artistic-blue-windows-7-cover-v0qwgn3ypat2bloy.jpg')] bg-cover bg-center bg-fixed relative">
-        <FeedWindow />
+        <Feed/>
+        <TrendingGuides/>
       </main>
     </>
   );
