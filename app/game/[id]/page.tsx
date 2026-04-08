@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Clock, Dumbbell, Award} from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { PresentationControls, Environment, ContactShadows } from "@react-three/drei";
 import GameCard3D from "@/components/gameCard3D";
 import { View } from "@react-three/drei";
 import { useNotification } from "@/components/NotificationProvider";
+import GuideCaseCard from "@/components/cards/guideCard";
 
 export default function GamePage() {
   const params = useParams();
@@ -35,9 +35,7 @@ export default function GamePage() {
   });
 
   const [guides, setGuides] = useState<any[]>([]);
-
   const [followingVotes, setFollowingVotes] = useState<any[]>([]);
-
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const { showNotification } = useNotification();
@@ -106,27 +104,27 @@ export default function GamePage() {
     };
 
     const fetchGuides = async () => {
-    if (!gameId) return;
-    try {
-      const { data } = await supabase
-        .from("guides")
-        .select(`
-          id, 
-          title, 
-          average_time, 
-          average_difficulty,
-          cover_url, 
-          user_id, 
-          profiles (nickname)
-        `)
-        .eq("game_id", gameId)
-        .order("created_at", { ascending: false });
+      if (!gameId) return;
+      try {
+        const { data } = await supabase
+          .from("guides")
+          .select(`
+            id, 
+            title, 
+            average_time, 
+            average_difficulty,
+            cover_url, 
+            user_id, 
+            profiles (nickname)
+          `)
+          .eq("game_id", gameId)
+          .order("created_at", { ascending: false });
 
-      if (data) setGuides(data);
-    } catch (error) {
-      console.error("Error obteniendo guías:", error);
-    }
-  };
+        if (data) setGuides(data);
+      } catch (error) {
+        console.error("Error obteniendo guías:", error);
+      }
+    };
 
     const fetchFollowingVotes = async () => {
       if (!gameId) return;
@@ -136,7 +134,6 @@ export default function GamePage() {
         const user = session?.user;
         
         if (!user) {
-          console.log("No hay sesión de usuario activa");
           return;
         }
 
@@ -340,73 +337,6 @@ export default function GamePage() {
             </div>
 
             <style>{`
-              .guide-case-container {
-                position: relative;
-                cursor: pointer;
-                perspective: 1000px;
-                aspect-ratio: 1/1; 
-                z-index: 1;
-              }
-              .guide-case {
-                width: 100%;
-                height: 100%;
-                position: relative;
-                background-size: cover;
-                background-position: center;
-                border: 2px inset #fff;
-                background-color: #e5e7eb;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                transform-style: preserve-3d;
-                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-              }
-              .guide-case-container:hover { z-index: 20; }
-              .guide-case-container:hover .guide-case {
-                transform: rotateX(8deg) rotateY(-8deg) scale(1.1) translateZ(30px);
-                box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
-              }
-              .guide-info-gradient {
-                position: absolute;
-                bottom: 0; left: 0; right: 0;
-                background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0) 100%);
-                padding: 30px 10px 15px 10px;
-                color: white;
-                display: flex; flex-direction: column; gap: 5px;
-                transition: opacity 0.2s ease;
-              }
-              .guide-case-container:hover .guide-info-gradient { opacity: 0.2; }
-              .guide-badges-area {
-                position: absolute;
-                bottom: 12px; left: 50%;
-                transform: translateX(-50%) translateZ(50px);
-                width: 110%;
-                display: flex; flex-direction: row; justify-content: center; gap: 5px;
-                opacity: 0;
-                transition: opacity 0.2s ease;
-                transform-style: preserve-3d;
-              }
-              .guide-case-container:hover .guide-badges-area { opacity: 1; }
-              .embedded-badge {
-                flex: 1 1 0%; 
-                justify-content: center;
-                background-color: rgba(20, 30, 40, 0.5); 
-                background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
-                backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                border-top-color: rgba(255, 255, 255, 0.7);
-                border-bottom-color: rgba(0, 0, 0, 0.8);
-                border-radius: 6px;
-                color: #fff;
-                padding: 3px 4px; font-size: 11px; font-weight: bold;
-                display: flex; align-items: center; gap: 4px;
-                box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -1px 3px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.6);
-                text-transform: capitalize; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-              }
-              .embedded-badge svg {
-                stroke-width: 2.5px; color: #fff; flex-shrink: 0;
-                filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
-              }
-
               .user-card {
                 transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
                 cursor: pointer;
@@ -424,42 +354,18 @@ export default function GamePage() {
             {guides.length > 0 ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
                 {guides.map((guia) => (
-                  <div 
-                    key={guia.id} 
-                    className="guide-case-container" 
-                    title={guia.title}
+                  <GuideCaseCard
+                    key={guia.id}
+                    guideData={guia}
+                    subtitle={`Por: ${guia.profiles?.nickname || "Desconocido"}`}
                     onClick={() => {
                       if (currentUserId === guia.user_id) {
                         router.push(`/game/${gameId}/write-guide?guideId=${guia.id}`);
                       } else {
                         router.push(`/game/${gameId}/guide/${guia.id}`);
                       }
-                    }}>
-                    <div 
-                      className="guide-case" 
-                      style={{ backgroundImage: `url(${guia.cover_url || gameData.cover_image_url})` }}
-                    >
-                      <div className="guide-info-gradient">
-                        <div style={{ fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guia.title}>
-                          {guia.title}
-                        </div>
-                        <div style={{ fontSize: "11px", color: "#ddd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          Por: {guia.profiles?.nickname || "Desconocido"}
-                        </div>
-                      </div>
-
-                      <div className="guide-badges-area">
-                        <div className="embedded-badge" title="Dificultad">
-                          <Dumbbell size={16} />
-                          <span>{guia.average_difficulty ? `${guia.average_difficulty}/10` : "--/10"}</span>
-                        </div>
-                        <div className="embedded-badge" title="Tiempo">
-                          <Clock size={16} />
-                          <span>{guia.average_time ? `${guia.average_time}h` : "--h"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    }}
+                  />
                 ))}
               </div>
             ) : (
