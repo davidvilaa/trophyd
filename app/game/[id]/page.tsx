@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Clock, Dumbbell, Award} from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { PresentationControls, Environment, ContactShadows } from "@react-three/drei";
 import GameCard3D from "@/components/gameCard3D";
@@ -28,6 +29,7 @@ export default function GamePage() {
   const [stats, setStats] = useState({
     avgRating: 0,
     avgDifficulty: 0,
+    avgTime: 0,
     distRating: { 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 } as Record<number, number>,
     distDiff: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 } as Record<number, number>,
     maxRatingCount: 1,
@@ -35,7 +37,9 @@ export default function GamePage() {
   });
 
   const [guides, setGuides] = useState<any[]>([]);
+
   const [followingVotes, setFollowingVotes] = useState<any[]>([]);
+
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const { showNotification } = useNotification();
@@ -65,15 +69,17 @@ export default function GamePage() {
       try {
         const { data, error } = await supabase
           .from("user_games")
-          .select("rating, difficulty")
+          .select("rating, difficulty, time_played")
           .eq("game_id", gameId);
 
         if (data && data.length > 0) {
           let rSum = 0, rCount = 0;
           let dSum = 0, dCount = 0;
+          let tSum = 0, tCount = 0;
           
           const rDist: Record<number, number> = { 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 };
           const dDist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 };
+          
           data.forEach(row => {
             if (row.rating > 0) {
               rSum += Number(row.rating);
@@ -87,11 +93,16 @@ export default function GamePage() {
               const dBucket = Math.round(Number(row.difficulty)); 
               if (dDist[dBucket] !== undefined) dDist[dBucket]++;
             }
+            if (row.time_played > 0) {
+              tSum += Number(row.time_played);
+              tCount++;
+            }
           });
 
           setStats({
             avgRating: rCount > 0 ? Number((rSum / rCount).toFixed(1)) : 0,
             avgDifficulty: dCount > 0 ? Number((dSum / dCount).toFixed(1)) : 0,
+            avgTime: tCount > 0 ? Math.round(tSum / tCount) : 0,
             distRating: rDist,
             distDiff: dDist,
             maxRatingCount: Math.max(...Object.values(rDist), 1),
@@ -236,7 +247,7 @@ export default function GamePage() {
               <div style={{ width: "100%", height: "100%", border: "4px solid #fff", backgroundColor: "#ccc" }} />
             )}
           </div>
-        <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", display: "flex", flexDirection: "column", gap: "15px" }}>
+        <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", display: "flex", flexDirection: "column", gap: "25px" }}>
             <legend style={{ fontSize: "16px", padding: "0 5px" }}>Community Stats</legend>
             
             <style>{`
@@ -258,9 +269,11 @@ export default function GamePage() {
             `}</style>
 
             <div>
-              <div style={{ fontSize: "13px", marginBottom: "5px", display: "flex", justifyContent: "space-between" }}>
-                <span>Nota media:</span>
-                <span style={{ fontWeight: "bold" }}>{stats.avgRating > 0 ? `${stats.avgRating} ★` : "--"}</span>
+              <div style={{ textAlign: "center", marginBottom: "15px" }}>
+                <span style={{ fontSize: "12px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Nota media</span>
+                <div style={{ fontSize: "28px", color: "#111", marginTop: "2px" }}>
+                  {stats.avgRating > 0 ? `${stats.avgRating} ★` : "--"}
+                </div>
               </div>
               <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
                 {escalasRating.map((nota) => {
@@ -277,15 +290,17 @@ export default function GamePage() {
                   );
                 })}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "2px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "4px" }}>
                 <span>1★</span><span>5★</span>
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: "13px", marginBottom: "5px", display: "flex", justifyContent: "space-between" }}>
-                <span>Dificultad media:</span>
-                <span style={{ fontWeight: "bold" }}>{stats.avgDifficulty > 0 ? `${stats.avgDifficulty}/10` : "--"}</span>
+              <div style={{ textAlign: "center", marginBottom: "15px" }}>
+                <span style={{ fontSize: "12px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Dificultad media</span>
+                <div style={{ fontSize: "28px", color: "#111", marginTop: "2px" }}>
+                  {stats.avgDifficulty > 0 ? `${stats.avgDifficulty}/10` : "--/10"}
+                </div>
               </div>
               <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
                 {escalasDiff.map((diff) => {
@@ -302,10 +317,18 @@ export default function GamePage() {
                   );
                 })}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "2px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "4px" }}>
                 <span>1</span><span>10</span>
               </div>
             </div>
+
+            <div style={{ textAlign: "center", paddingTop: "5px", borderTop: "1px solid #eee" }}>
+              <span style={{ fontSize: "12px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Tiempo medio</span>
+              <div style={{ fontSize: "28px", color: "#111", marginTop: "2px" }}>
+                {stats.avgTime > 0 ? `${stats.avgTime}h` : "--h"}
+              </div>
+            </div>
+
           </fieldset>
         </div>
 
@@ -336,21 +359,6 @@ export default function GamePage() {
               </button>
             </div>
 
-            <style>{`
-              .user-card {
-                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-                cursor: pointer;
-                position: relative;
-                padding: 8px; 
-                margin-bottom: 12px;
-              }
-              .user-card:hover { 
-                transform: scale(1.05); 
-                box-shadow: 0 10px 20px rgba(0,0,0,0.25) !important;
-                z-index: 10;
-              }
-            `}</style>
-
             {guides.length > 0 ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
                 {guides.map((guia) => (
@@ -380,6 +388,21 @@ export default function GamePage() {
         <div style={{ width: "260px", flexShrink: 0, marginTop: "100px" }}>
           <fieldset style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ccc", minHeight: "200px" }}>
             
+            <style>{`
+              .user-card {
+                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+                cursor: pointer;
+                position: relative;
+                padding: 8px; 
+                margin-bottom: 12px;
+              }
+              .user-card:hover { 
+                transform: scale(1.05); 
+                box-shadow: 0 10px 20px rgba(0,0,0,0.25) !important;
+                z-index: 10;
+              }
+            `}</style>
+
             <div style={{ display: "flex", flexDirection: "column", marginTop: "10px" }}>
               {followingVotes.length > 0 ? (
                 followingVotes.map((vote, index) => (
