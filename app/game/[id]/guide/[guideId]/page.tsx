@@ -245,15 +245,15 @@ export default function GuideReadingPage() {
               {guideData.title}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", zIndex: 10, paddingRight: "10px", gap: "6px" }}>
-              <span style={{ fontSize: "13px", color: "#444", fontWeight: "bold" }}>{likeCount}</span>
+            <div style={{ display: "flex", alignItems: "center", zIndex: 10, gap: "6px", padding: 0, margin: 0 }}>
+              <span style={{ fontSize: "14px", color: "#444", fontWeight: "bold"}}>{likeCount}</span>
               <button 
                 type="button"
                 onClick={toggleLike}
                 disabled={isTogglingLike}
                 style={{ 
                   background: "transparent", border: "none", boxShadow: "none", minWidth: "auto",
-                  fontSize: "24px", lineHeight: "1", cursor: "pointer", padding: "0 2px",
+                  fontSize: "28px", lineHeight: "1", cursor: "pointer", padding: "0 6px 0 3px", margin: 0,
                   color: isLiked ? "#dc2626" : "#9ca3af",
                   transform: isLiked ? "scale(1.15)" : "scale(1)",
                   transition: "all 0.2s ease"

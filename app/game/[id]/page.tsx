@@ -37,6 +37,7 @@ export default function GamePage() {
   });
 
   const [guides, setGuides] = useState<any[]>([]);
+  const [guideSortBy, setGuideSortBy] = useState("most_liked");
 
   const [followingVotes, setFollowingVotes] = useState<any[]>([]);
 
@@ -119,11 +120,26 @@ export default function GamePage() {
       try {
         const { data } = await supabase
           .from("guides")
-          .select(`id, title, average_time, average_difficulty, cover_url, user_id, profiles!guides_user_id_fkey (nickname)`)
-          .eq("game_id", gameId)
-          .order("created_at", { ascending: false });
+          .select(`
+            id, 
+            title, 
+            average_time, 
+            average_difficulty,
+            cover_url, 
+            user_id, 
+            created_at,
+            profiles!guides_user_id_fkey (nickname),
+            guide_likes (user_id)
+          `)
+          .eq("game_id", gameId);
 
-        if (data) setGuides(data);
+        if (data) {
+          const processed = data.map((g: any) => ({
+            ...g,
+            likesCount: g.guide_likes ? g.guide_likes.length : 0
+          }));
+          setGuides(processed);
+        }
       } catch (error) {
         console.error("Error obteniendo guías:", error);
       }
@@ -198,6 +214,13 @@ export default function GamePage() {
 
   const escalasRating = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
   const escalasDiff = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  const sortedGuides = [...guides].sort((a, b) => {
+    if (guideSortBy === "newest") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    if (guideSortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (guideSortBy === "most_liked") return (b.likesCount || 0) - (a.likesCount || 0);
+    return 0;
+  });
 
   return (
     <main ref={mainRef} style={{ minHeight: "100vh", backgroundColor: "#f3f4f6", paddingBottom: "50px" }}>
@@ -334,26 +357,42 @@ export default function GamePage() {
 
           <fieldset style={{ padding: "20px", backgroundColor: "#fff", border: "1px solid #ccc", minHeight: "250px" }}>
             
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #eee", paddingBottom: "10px", flexWrap: "wrap", gap: "10px" }}>
               <legend style={{ fontSize: "18px", padding: "0 5px", margin: 0 }}>Guías de la Comunidad ({guides.length})</legend>
-              <button 
-                className="default aero-btn-list"
-                onClick={() => {
-                  if (!currentUserId) {
-                    showNotification("Debes iniciar sesión para escribir una guía.", "info");
-                    return;
-                  }
-                  router.push(`/game/${gameId}/write-guide`);
-                }}
-                style={{ padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}
-              >
-                + Escribir Guía
-              </button>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px" }}>
+                  <select 
+                    id="guideSortBy" 
+                    value={guideSortBy} 
+                    onChange={(e) => setGuideSortBy(e.target.value)}
+                    style={{ padding: "0 8px", fontSize: "13px", height: "28px", borderRadius: "3px", border: "1px solid #ccc", backgroundColor: "#fff", cursor: "pointer" }}
+                  >
+                    <option value="most_liked">Más votadas</option>
+                    <option value="newest">Más recientes</option>
+                    <option value="oldest">Más antiguas</option>
+                  </select>
+                </div>
+
+                <button 
+                  className="default aero-btn-list"
+                  onClick={() => {
+                    if (!currentUserId) {
+                      showNotification("Debes iniciar sesión para escribir una guía.", "info");
+                      return;
+                    }
+                    router.push(`/game/${gameId}/write-guide`);
+                  }}
+                  style={{ padding: "0 12px", height: "28px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", margin: 0 }}
+                >
+                  + Escribir Guía
+                </button>
+              </div>
             </div>
 
-            {guides.length > 0 ? (
+            {sortedGuides.length > 0 ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "20px" }}>
-                {guides.map((guia) => (
+                {sortedGuides.map((guia) => (
                   <GuideCaseCard
                     key={guia.id}
                     guideData={guia}

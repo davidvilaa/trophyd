@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Dumbbell } from "lucide-react";
+import { Clock, Dumbbell, Heart } from "lucide-react";
 
 const getDifficultyColor = (diff: number | null | undefined) => {
   if (!diff) return "rgba(20, 30, 40, 0.5)";
@@ -143,6 +143,10 @@ export default function GuideCaseCard({
         style={{ backgroundImage: `url(${bgImage})` }}
       >
         <div className="guide-badges-area">
+          <div className="embedded-badge" title="Likes" style={{ backgroundColor: "rgba(220, 38, 38, 0.65)" }}>
+            <Heart size={16} fill="currentColor" />
+            <span>{guideData.likesCount !== undefined ? guideData.likesCount : "-"}</span>
+          </div>
           <div className="embedded-badge" title="Difficulty" style={{ backgroundColor: getDifficultyColor(guideData.average_difficulty) }}>
             <Dumbbell size={16} />
             <span>{guideData.average_difficulty ? `${guideData.average_difficulty}/10` : "--/10"}</span>
