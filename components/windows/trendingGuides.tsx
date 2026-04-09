@@ -1,11 +1,109 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Draggable from "react-draggable";
 import { supabase } from "@/lib/supabase";
 import { Flame } from "lucide-react";
 import { useRouter } from "next/navigation";
 import GuideCaseCard from "@/components/cards/guideCard";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { useGLTF, Environment, Float } from "@react-three/drei";
+import * as THREE from "three";
+
+function Medalla3D({ url, rank }: { url: string, rank: number }) {
+  const { scene } = useGLTF(url);
+  const clone = useMemo(() => scene.clone(), [scene]);
+  const meshRef = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    const color = rank === 0 ? "#FFD700" : rank === 1 ? "#C0C0C0" : "#CD7F32";
+    
+    clone.traverse((child: any) => {
+      if (child.isMesh) {
+        child.material = child.material.clone();
+        child.material.color = new THREE.Color(color);
+        child.material.metalness = 0.8;
+        child.material.roughness = 0.2;
+      }
+    });
+  }, [clone, rank]);
+
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 1.5;
+    }
+  });
+
+  return (
+    <group ref={meshRef} position={[1.5, -3, 0]}>
+      <primitive object={clone} scale={0.06} position={[0, 0, 0]} />
+    </group>
+  );
+}
+
+function TrendingItem({ guia, index, router }: { guia: any, index: number, router: any }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div 
+      style={{ position: "relative" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {index >= 3 && (
+        <div style={{
+          position: "absolute",
+          top: "-10px",
+          left: "-10px",
+          width: "28px",
+          height: "28px",
+          backgroundColor: "#334155",
+          color: "#fff",
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: "bold",
+          fontSize: "14px",
+          zIndex: 30,
+          boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+          border: "2px solid #fff"
+        }}>
+          {index + 1}
+        </div>
+      )}
+
+      <GuideCaseCard 
+        guideData={guia} 
+        subtitle={`${guia.games?.title} • Por: ${guia.profiles?.nickname}`}
+        onClick={() => router.push(`/game/${guia.game_id}/guide/${guia.id}`)}
+      />
+
+      {index < 3 && (
+        <div style={{
+          position: "absolute",
+          bottom: "-25px",
+          right: "-25px",
+          width: "90px",
+          height: "90px",
+          zIndex: 40,
+          pointerEvents: "none",
+          opacity: hovered ? 0.2 : 1,
+          transition: "opacity 0.3s ease"
+        }}>
+          <Canvas camera={{ position: [0, 0, 15], fov: 40 }}>
+            <ambientLight intensity={1.5} />
+            <directionalLight position={[5, 5, 5]} intensity={2} />
+            <Environment preset="city" />
+            <Float speed={3} rotationIntensity={0.5} floatIntensity={0.5}>
+              <Medalla3D url="/models/medalla.glb" rank={index} />
+            </Float>
+          </Canvas>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TrendingWindow() {
   const [trending, setTrending] = useState<any[]>([]);
@@ -44,7 +142,7 @@ export default function TrendingWindow() {
           setTrending(sorted.slice(0, 10)); 
         }
       } catch (error) {
-        console.error("Error cargando trending:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -89,7 +187,7 @@ export default function TrendingWindow() {
             </p>
           </div>
           
-          <div style={{ padding: "15px", maxHeight: "450px", overflowY: "auto" }}>
+          <div style={{ padding: "15px", maxHeight: "450px", overflowY: "auto", overflowX: "hidden" }}>
             {loading ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Buscando las mejores guías... ⏳</div>
             ) : trending.length === 0 ? (
@@ -104,35 +202,7 @@ export default function TrendingWindow() {
                 padding: "5px"
               }}>
                 {trending.map((guia, index) => (
-                  <div key={guia.id} style={{ position: "relative" }}>
-                    
-                    <div style={{
-                      position: "absolute",
-                      top: "-10px",
-                      left: "-10px",
-                      width: "28px",
-                      height: "28px",
-                      backgroundColor: index === 0 ? "#fbbf24" : index === 1 ? "#94a3b8" : index === 2 ? "#b45309" : "#334155",
-                      color: "#fff",
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: "bold",
-                      fontSize: "14px",
-                      zIndex: 30,
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                      border: "2px solid #fff"
-                    }}>
-                      {index + 1}
-                    </div>
-
-                    <GuideCaseCard 
-                      guideData={guia} 
-                      subtitle={`${guia.games?.title} • Por: ${guia.profiles?.nickname}`}
-                      onClick={() => router.push(`/game/${guia.game_id}/guide/${guia.id}`)}
-                    />
-                  </div>
+                  <TrendingItem key={guia.id} guia={guia} index={index} router={router} />
                 ))}
               </div>
             )}
