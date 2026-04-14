@@ -106,8 +106,11 @@ function TrendingItem({ guia, index, router }: { guia: any, index: number, route
 }
 
 export default function TrendingWindow() {
+  const [allGuides, setAllGuides] = useState<any[]>([]);
   const [trending, setTrending] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("mensual");
+  
   const windowRef = useRef(null);
   const router = useRouter();
 
@@ -125,6 +128,7 @@ export default function TrendingWindow() {
             cover_url, 
             user_id,
             game_id,
+            created_at,
             games ( id, title, cover_image_url ),
             profiles!guides_user_id_fkey (nickname),
             guide_likes (user_id)
@@ -137,12 +141,10 @@ export default function TrendingWindow() {
             ...g,
             likesCount: g.guide_likes ? g.guide_likes.length : 0
           }));
-
-          const sorted = processed.sort((a, b) => b.likesCount - a.likesCount);
-          setTrending(sorted.slice(0, 10)); 
+          setAllGuides(processed);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error obteniendo trending:", error);
       } finally {
         setLoading(false);
       }
@@ -150,6 +152,26 @@ export default function TrendingWindow() {
 
     fetchTrending();
   }, []);
+
+  useEffect(() => {
+    if (allGuides.length === 0) return;
+
+    const now = new Date();
+    const timeLimit = new Date();
+
+    if (activeTab === "diario") {
+      timeLimit.setDate(now.getDate() - 1);
+    } else if (activeTab === "semanal") {
+      timeLimit.setDate(now.getDate() - 7);
+    } else if (activeTab === "mensual") {
+      timeLimit.setMonth(now.getMonth() - 1);
+    }
+
+    const filtered = allGuides.filter(g => new Date(g.created_at) >= timeLimit);
+    const sorted = filtered.sort((a, b) => b.likesCount - a.likesCount);
+
+    setTrending(sorted.slice(0, 10));
+  }, [allGuides, activeTab]);
 
   return (
     <Draggable handle=".title-bar" nodeRef={windowRef} defaultPosition={{ x: 550, y: 100 }}>
@@ -172,27 +194,55 @@ export default function TrendingWindow() {
 
         <div className="window-body has-space" style={{ margin: 0, padding: 0, backgroundColor: "#f3f4f6" }}>
           
-          <div style={{ 
-            padding: "15px", 
-            borderBottom: "1px solid #ccc", 
-            backgroundColor: "#fff",
-            backgroundImage: "linear-gradient(to bottom, #fff 0%, #f9fafb 100%)"
-          }}>
-            <h3 style={{ margin: 0, fontSize: "16px", color: "#111", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Flame size={20} color="#dc2626" /> 
-              Las guías más votadas
-            </h3>
-            <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#666" }}>
-              Descubre qué están usando otros jugadores para pasarse sus juegos.
-            </p>
-          </div>
+          <style>{`
+            .tab-activa,
+            [role="menubar"] [role="menuitem"]:hover,
+            [role="menubar"] [role="menuitem"]:focus,
+            [role="menubar"] [role="menuitem"]:active {
+              background: linear-gradient(to bottom, rgba(175, 205, 245, 0.4) 0%, rgba(135, 175, 225, 0.4) 100%) !important;
+              color: #000 !important;
+              border-radius: 3px;
+              box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+              outline: none !important;
+            }
+          `}</style>
+
+          <ul role="menubar" style={{ margin: 0, padding: "2px 2px", fontSize: "14px", backgroundColor: "transparent", borderBottom: "1px solid rgba(0,0,0,0.1)", display: "flex" }}>
+            <li 
+              role="menuitem" 
+              tabIndex={0} 
+              className={activeTab === "diario" ? "tab-activa" : ""}
+              onClick={() => setActiveTab("diario")}
+              style={{ cursor: "pointer", padding: "4px 10px" }}
+            >
+              Top Diario
+            </li>
+            <li 
+              role="menuitem" 
+              tabIndex={0} 
+              className={activeTab === "semanal" ? "tab-activa" : ""}
+              onClick={() => setActiveTab("semanal")}
+              style={{ cursor: "pointer", padding: "4px 10px" }}
+            >
+              Top Semanal
+            </li>
+            <li 
+              role="menuitem" 
+              tabIndex={0} 
+              className={activeTab === "mensual" ? "tab-activa" : ""}
+              onClick={() => setActiveTab("mensual")}
+              style={{ cursor: "pointer", padding: "4px 10px" }}
+            >
+              Top Mensual
+            </li>
+          </ul>
           
-          <div style={{ padding: "15px", maxHeight: "450px", overflowY: "auto", overflowX: "hidden" }}>
+          <div style={{ padding: "15px", maxHeight: "400px", overflowY: "auto", overflowX: "hidden" }}>
             {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Buscando las mejores guías... ⏳</div>
+              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando...</div>
             ) : trending.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "12px" }}>
-                Aún no hay guías suficientes.
+                Aún no hay guías destacadas para este periodo.
               </div>
             ) : (
               <div style={{ 
@@ -207,10 +257,6 @@ export default function TrendingWindow() {
               </div>
             )}
           </div>
-        </div>
-        
-        <div className="status-bar" style={{ margin: 0 }}>
-          <p className="status-bar-field">Mostrando el Top 10 Global</p>
         </div>
       </div>
     </Draggable>

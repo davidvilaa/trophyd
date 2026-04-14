@@ -33,15 +33,13 @@ export default function ProfileContentPage() {
 
   useEffect(() => {
     const comprobarSesion = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/");
-      } else {
-        setCurrentUserId(session.user.id);
+      const { data: { user } } = await supabase.auth.getUser(); 
+      if (user) {
+        setCurrentUserId(user.id);
       }
     };
     comprobarSesion();
-  }, [router]);
+  }, []);
 
   const cargarDatosPerfil = async () => {
     setLoading(true);

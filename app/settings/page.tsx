@@ -27,20 +27,20 @@ export default function ConfigPage() {
 
   useEffect(() => {
     const cargarDatos = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user }, error } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user || error) {
         router.push("/");
         return;
       }
 
-      setUserId(session.user.id);
-      setCorreoActualForm1(session.user.email || "");
+      setUserId(user.id);
+      setCorreoActualForm1(user.email || "");
 
       const { data: profile } = await supabase
         .from("profiles")
         .select("nickname, bio, pfp_url")
-        .eq("id", session.user.id)
+        .eq("id", user.id)
         .single();
 
       if (profile) {
