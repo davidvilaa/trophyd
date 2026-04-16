@@ -50,29 +50,6 @@ function TrendingItem({ guia, index, router }: { guia: any, index: number, route
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {index >= 3 && (
-        <div style={{
-          position: "absolute",
-          top: "-10px",
-          left: "-10px",
-          width: "28px",
-          height: "28px",
-          backgroundColor: "#334155",
-          color: "#fff",
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: "bold",
-          fontSize: "14px",
-          zIndex: 30,
-          boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-          border: "2px solid #fff"
-        }}>
-          {index + 1}
-        </div>
-      )}
-
       <GuideCaseCard 
         guideData={guia} 
         subtitle={`${guia.games?.title} • Por: ${guia.profiles?.nickname}`}
@@ -91,7 +68,7 @@ function TrendingItem({ guia, index, router }: { guia: any, index: number, route
           opacity: hovered ? 0.2 : 1,
           transition: "opacity 0.3s ease"
         }}>
-          <Canvas camera={{ position: [0, 0, 15], fov: 40 }}>
+          <Canvas camera={{ position: [550, 0, 15], fov: 40 }}>
             <ambientLight intensity={1.5} />
             <directionalLight position={[5, 5, 5]} intensity={2} />
             <Environment preset="city" />
@@ -103,7 +80,7 @@ function TrendingItem({ guia, index, router }: { guia: any, index: number, route
       )}
     </div>
   );
-}
+} // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! - CAMARA MOVIDA POR EL MOMENTO, CAMBIAR LUEGO ^^^^^^
 
 export default function TrendingWindow() {
   const [allGuides, setAllGuides] = useState<any[]>([]);
@@ -174,7 +151,7 @@ export default function TrendingWindow() {
   }, [allGuides, activeTab]);
 
   return (
-    <Draggable handle=".title-bar" nodeRef={windowRef} defaultPosition={{ x: 550, y: 100 }}>
+    <Draggable handle=".title-bar" nodeRef={windowRef} defaultPosition={{ x: 550, y: 50 }}>
       <div 
         ref={windowRef} 
         className="window glass active" 
@@ -237,22 +214,26 @@ export default function TrendingWindow() {
             </li>
           </ul>
           
-          <div style={{ padding: "15px", maxHeight: "400px", overflowY: "auto", overflowX: "hidden" }}>
+          <div style={{ padding: "0" }}>
             {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando...</div>
+              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Buscando las mejores guías... ⏳</div>
             ) : trending.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "12px" }}>
                 Aún no hay guías destacadas para este periodo.
               </div>
             ) : (
               <div style={{ 
-                display: "grid", 
-                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", 
+                display: "flex", 
+                flexDirection: "row",
+                overflowX: "auto",
+                overflowY: "hidden",
                 gap: "20px",
-                padding: "5px"
+                padding: "20px 20px 45px 20px"
               }}>
                 {trending.map((guia, index) => (
-                  <TrendingItem key={guia.id} guia={guia} index={index} router={router} />
+                  <div key={guia.id} style={{ flex: "0 0 160px" }}>
+                    <TrendingItem guia={guia} index={index} router={router} />
+                  </div>
                 ))}
               </div>
             )}
