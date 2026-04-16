@@ -149,7 +149,7 @@ export default function GuideCaseCard({
           </div>
           <div className="embedded-badge" title="Difficulty" style={{ backgroundColor: getDifficultyColor(guideData.average_difficulty) }}>
             <Dumbbell size={16} />
-            <span>{guideData.average_difficulty ? `${guideData.average_difficulty}/10` : "--/10"}</span>
+            <span>{guideData.average_difficulty ? `${guideData.average_difficulty}` : "--"}</span>
           </div>
           <div className="embedded-badge" title="Time" style={{ backgroundColor: getTimeColor(guideData.average_time) }}>
             <Clock size={16} />

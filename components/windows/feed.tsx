@@ -89,8 +89,10 @@ export default function FeedWindow() {
         game_id,
         created_at,
         title,
+        cover_url,
         average_time,
         average_difficulty,
+        guide_likes ( count ),
         profiles:guides_user_id_fkey ( nickname, pfp_url ),
         games ( id, title, cover_image_url )
       `;
@@ -134,7 +136,8 @@ export default function FeedWindow() {
       const formattedGuides = guidesData.map(g => ({
         ...g,
         status: 'guide_created',
-        isGuide: true
+        isGuide: true,
+        likesCount: g.guide_likes?.[0]?.count ?? 0
       }));
 
       const combinedFeed = [...logsData, ...formattedGuides]

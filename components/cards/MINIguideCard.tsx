@@ -79,7 +79,7 @@ export default function MiniGuideCaseCard({
         .mini-guide-case-container:hover .mini-guide-overlay {
           opacity: 1;
         }
-        .mini-badges-row {
+        .mini-guide-badges-row {
           position: absolute;
           top: 4px;
           left: 0; right: 0;
@@ -89,8 +89,13 @@ export default function MiniGuideCaseCard({
           padding: 0 4px;
           transform: translateZ(15px);
           transform-style: preserve-3d;
+          opacity: 0;
+          transition: opacity 0.2s ease;
         }
-        .mini-badge {
+        .mini-guide-case-container:hover .mini-guide-badges-row {
+          opacity: 1;
+        }
+        .mini-guide-badge {
           flex: 1 1 0%;
           justify-content: center;
           background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 49%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%);
@@ -124,21 +129,20 @@ export default function MiniGuideCaseCard({
       `}</style>
 
       <div className="mini-guide-case" style={{ backgroundImage: `url(${bgImage})` }}>
-        
-        <div className="mini-guide-overlay">
-          <div className="mini-badges-row">
-            <div className="mini-badge" style={{ backgroundColor: "rgba(220, 38, 38, 0.65)" }}>
-              <Heart size={8} fill="currentColor" strokeWidth={3} />
-              <span>{guideData.likesCount !== undefined ? guideData.likesCount : "-"}</span>
-            </div>
-            <div className="mini-badge" style={{ backgroundColor: getDifficultyColor(guideData.average_difficulty) }}>
-              <Dumbbell size={8} strokeWidth={3} />
-              <span>{guideData.average_difficulty ? guideData.average_difficulty : "-"}</span>
-            </div>
-            <div className="mini-badge" style={{ backgroundColor: getTimeColor(guideData.average_time) }}>
-              <Clock size={8} strokeWidth={3} />
-              <span>{guideData.average_time ? guideData.average_time : "-"}</span>
-            </div>
+  
+        <div className="mini-guide-overlay"></div>
+        <div className="mini-guide-badges-row">
+          <div className="mini-guide-badge" style={{ backgroundColor: "rgba(220, 38, 38, 0.65)" }}>
+            <Heart size={8} fill="currentColor" strokeWidth={3} />
+            <span>{guideData.likesCount !== undefined ? guideData.likesCount : "-"}</span>
+          </div>
+          <div className="mini-guide-badge" style={{ backgroundColor: getDifficultyColor(guideData.average_difficulty) }}>
+            <Dumbbell size={8} strokeWidth={3} />
+            <span>{guideData.average_difficulty ? guideData.average_difficulty : "-"}</span>
+          </div>
+          <div className="mini-guide-badge" style={{ backgroundColor: getTimeColor(guideData.average_time) }}>
+            <Clock size={8} strokeWidth={3} />
+            <span>{guideData.average_time ? guideData.average_time : "-"}</span>
           </div>
         </div>
 
