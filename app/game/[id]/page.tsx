@@ -314,7 +314,7 @@ export default function GamePage() {
               <div style={{ textAlign: "center", marginBottom: "15px" }}>
                 <span style={{ fontSize: "12px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Dificultad media</span>
                 <div style={{ fontSize: "28px", color: "#111", marginTop: "2px" }}>
-                  {stats.avgDifficulty > 0 ? `${stats.avgDifficulty}/10` : "--/10"}
+                  {stats.avgDifficulty > 0 ? `${stats.avgDifficulty}` : "--"}
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
@@ -327,7 +327,7 @@ export default function GamePage() {
                       className="stat-bar diff"
                       onClick={() => console.log(`Futuro filtro de usuarios por dificultad: ${diff}`)}
                       style={{ flex: 1, height: `${Math.max(altura, 2)}%` }} 
-                      title={`Dificultad ${diff}/10: ${count} votos`}
+                      title={`Dificultad ${diff}: ${count} votos`}
                     ></div>
                   );
                 })}
