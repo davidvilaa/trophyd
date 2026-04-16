@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import Draggable from "react-draggable";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Activity, Trophy, Play, Pause, XCircle, Gift, Clock } from "lucide-react";
+import { Activity, Trophy, Play, Pause, XCircle, Gift, Clock, Flame } from "lucide-react";
 import MiniGameCaseCard from "@/components/cards/MINIgameCard";
+import MiniGuideCaseCard from "@/components/cards/MINIguideCard";
 
 const timeAgo = (dateString: string) => {
   if (!dateString) return "";
@@ -35,6 +36,8 @@ const getStatusConfig = (status: string) => {
       return { text: 'ha abandonado', color: "#a55c5c", icon: <XCircle size={14} /> };
     case 'wishlist': 
       return { text: 'quiere jugar a', color: "#8e7cc3", icon: <Gift size={14} /> };
+    case 'guide_created':
+      return { text: 'ha publicado una guía de', color: "#ff7b00", icon: <Flame size={14} fill="#ff7b00" /> };
     default: 
       return { text: 'ha logueado', color: "#636e72", icon: <Activity size={14} /> };
   }
@@ -68,7 +71,7 @@ export default function FeedWindow() {
     const fetchFeed = async () => {
       setLoading(true);
 
-      const baseQuery = `
+      const baseQueryGames = `
         user_id,
         game_id,
         status,
@@ -80,14 +83,30 @@ export default function FeedWindow() {
         games ( id, title, cover_image_url )
       `;
 
-      if (activeTab === "global") {
-        const { data, error } = await supabase
-          .from('user_games')
-          .select(baseQuery)
-          .order('created_at', { ascending: false })
-          .limit(20);
+      const baseQueryGuides = `
+        id,
+        user_id,
+        game_id,
+        created_at,
+        title,
+        average_time,
+        average_difficulty,
+        profiles:guides_user_id_fkey ( nickname, pfp_url ),
+        games ( id, title, cover_image_url )
+      `;
 
-        if (!error && data) setFeed(data);
+      let logsData: any[] = [];
+      let guidesData: any[] = [];
+
+      if (activeTab === "global") {
+        const [logsRes, guidesRes] = await Promise.all([
+          supabase.from('user_games').select(baseQueryGames).order('created_at', { ascending: false }).limit(20),
+          supabase.from('guides').select(baseQueryGuides).order('created_at', { ascending: false }).limit(20)
+        ]);
+
+        if (!logsRes.error) logsData = logsRes.data || [];
+        if (!guidesRes.error) guidesData = guidesRes.data || [];
+
       } else if (activeTab === "friends") {
         if (!currentUserId) {
           setFeed([]);
@@ -103,20 +122,26 @@ export default function FeedWindow() {
         const friendIds = (!followsError && followsData) ? followsData.map(f => f.following_id) : [];
         const targetIds = [...friendIds, currentUserId];
 
-        const { data, error } = await supabase
-          .from('user_games')
-          .select(baseQuery)
-          .in('user_id', targetIds)
-          .order('created_at', { ascending: false })
-          .limit(20);
+        const [logsRes, guidesRes] = await Promise.all([
+          supabase.from('user_games').select(baseQueryGames).in('user_id', targetIds).order('created_at', { ascending: false }).limit(20),
+          supabase.from('guides').select(baseQueryGuides).in('user_id', targetIds).order('created_at', { ascending: false }).limit(20)
+        ]);
 
-        if (!error && data) {
-          setFeed(data);
-        } else {
-          setFeed([]);
-        }
+        if (!logsRes.error) logsData = logsRes.data || [];
+        if (!guidesRes.error) guidesData = guidesRes.data || [];
       }
 
+      const formattedGuides = guidesData.map(g => ({
+        ...g,
+        status: 'guide_created',
+        isGuide: true
+      }));
+
+      const combinedFeed = [...logsData, ...formattedGuides]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 20);
+
+      setFeed(combinedFeed);
       setLoading(false);
     };
 
@@ -193,37 +218,52 @@ export default function FeedWindow() {
                 {feed.map((item) => {
                   if (!item.profiles || !item.games) return null;
 
-                  const uniqueKey = `${item.user_id}-${item.game_id}`;
+                  const uniqueKey = item.isGuide ? `guide-${item.id}` : `game-${item.user_id}-${item.game_id}-${item.created_at}`;
                   const statusConfig = getStatusConfig(item.status);
                   const userPfpUrl = getPfpUrl(item.profiles.pfp_url);
+                  
+                  const actionLink = item.isGuide 
+                    ? `/game/${item.games.id}/guide/${item.id}`
+                    : `/game/${item.games.id}`;
 
                   return (
                     <div 
                       key={uniqueKey} 
                       style={{ 
-                        display: "flex", gap: "12px", alignItems: "center", 
-                        padding: "10px", backgroundColor: "rgba(255, 255, 255, 0.7)", 
-                        border: "1px solid rgba(255, 255, 255, 0.5)", borderRadius: "6px",
+                        display: "flex", gap: "15px", alignItems: "flex-start", 
+                        padding: "12px", 
+                        backgroundColor: item.isGuide ? "rgba(255, 123, 0, 0.05)" : "rgba(255, 255, 255, 0.7)", 
+                        border: item.isGuide ? "1px solid rgba(255, 123, 0, 0.2)" : "1px solid rgba(255, 255, 255, 0.5)", 
+                        borderRadius: "6px",
                         boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
                       }}
                     >
-                      <div style={{ width: "50px", flexShrink: 0 }}>
-                        <MiniGameCaseCard 
-                          gameData={item} 
-                          onClick={() => window.location.href = `/game/${item.games.id}`}
-                        />
+                      {/* CROMO CONDICIONAL */}
+                      <div style={{ width: item.isGuide ? "70px" : "50px", flexShrink: 0 }}>
+                        {item.isGuide ? (
+                          <MiniGuideCaseCard 
+                            guideData={item} 
+                            onClick={() => window.location.href = actionLink}
+                          />
+                        ) : (
+                          <MiniGameCaseCard 
+                            gameData={item} 
+                            onClick={() => window.location.href = actionLink}
+                          />
+                        )}
                       </div>
 
-                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "2px" }}>
                         
+                        {/* Cabecera: Avatar, Nombre y Tiempo (SIN NEGRITA) */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                             <img 
                               src={userPfpUrl} 
                               alt={item.profiles.nickname} 
-                              style={{ width: "24px", height: "24px", borderRadius: "2px", objectFit: "cover", border: "1px solid rgba(0,0,0,0.2)" }} 
+                              style={{ width: "18px", height: "18px", borderRadius: "2px", objectFit: "cover", border: "1px solid rgba(0,0,0,0.2)" }} 
                             />
-                            <Link href={`/profile/${item.profiles.nickname}`} style={{ fontSize: "13px", fontWeight: "bold", color: "#0055cc", textDecoration: "none" }}>
+                            <Link href={`/profile/${item.profiles.nickname}`} style={{ fontSize: "13px", color: "#0055cc", textDecoration: "none" }}>
                               {item.profiles.nickname}
                             </Link>
                           </div>
@@ -232,11 +272,33 @@ export default function FeedWindow() {
                           </div>
                         </div>
                         
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: statusConfig.color, flexWrap: "wrap", lineHeight: "1.2" }}>
-                          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        {/* TEXTO EN DOS LÍNEAS (Todo en minúsculas y sin negrita) */}
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span style={{ 
+                            display: "flex", 
+                            alignItems: "center", 
+                            gap: "4px", 
+                            fontSize: "12px", 
+                            color: statusConfig.color,
+                            textTransform: "none", // Forzamos minúsculas
+                            letterSpacing: "0px"
+                          }}>
                             {statusConfig.icon} {statusConfig.text}
                           </span>
-                          <Link href={`/game/${item.games.id}`} style={{ color: "#333", textDecoration: "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                          
+                          <Link 
+                            href={actionLink} 
+                            style={{ 
+                              color: "#333", 
+                              textDecoration: "none", 
+                              fontSize: "14px", 
+                              marginTop: "1px",
+                              whiteSpace: "nowrap", 
+                              overflow: "hidden", 
+                              textOverflow: "ellipsis", 
+                              maxWidth: "100%" 
+                            }}
+                          >
                             {item.games.title}
                           </Link>
                         </div>

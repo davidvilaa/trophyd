@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Draggable from "react-draggable";
 import { supabase } from "@/lib/supabase";
-import { Gamepad2, Play, MoveLeft, MoveRight, House, FileEdit, User } from "lucide-react";
+import { Gamepad2, Play, MoveLeft, MoveRight, House, FileEdit, User, Trophy, Pause, XCircle, Gift, Flame } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import GameCaseCard from "@/components/cards/gameCard";
@@ -164,28 +164,39 @@ export default function PlayingNow() {
                     textAlign: "center"
                   }}>
                     <div>
-                      <div style={{ fontSize: "10px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Completados</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "10px", color: "#4a7c59", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold" }}>
+                        <Trophy size={12} /> Completados
+                      </div>
                       <div style={{ fontSize: "28px", color: "#111", marginTop: "2px", fontWeight: "300" }}>{stats.completed}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "10px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Jugando</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "10px", color: "#4a69bd", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold" }}>
+                        <Play size={12} /> Jugando
+                      </div>
                       <div style={{ fontSize: "28px", color: "#111", marginTop: "2px", fontWeight: "300" }}>{stats.playing}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "10px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Guías</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "10px", color: "#ff7b00", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold" }}>
+                        <Flame size={12} /> Guías
+                      </div>
                       <div style={{ fontSize: "28px", color: "#111", marginTop: "2px", fontWeight: "300" }}>{stats.guides}</div>
                     </div>
-                    
                     <div>
-                      <div style={{ fontSize: "10px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Pausados</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "10px", color: "#7f8c8d", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold" }}>
+                        <Pause size={12} /> Pausados
+                      </div>
                       <div style={{ fontSize: "28px", color: "#111", marginTop: "2px", fontWeight: "300" }}>{stats.paused}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "10px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Wishlist</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "10px", color: "#8e7cc3", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold" }}>
+                        <Gift size={12} /> Wishlist
+                      </div>
                       <div style={{ fontSize: "28px", color: "#111", marginTop: "2px", fontWeight: "300" }}>{stats.wishlist}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "10px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Abandonados</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "10px", color: "#a55c5c", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold" }}>
+                        <XCircle size={12} /> Abandonados
+                      </div>
                       <div style={{ fontSize: "28px", color: "#111", marginTop: "2px", fontWeight: "300" }}>{stats.dropped}</div>
                     </div>
                   </div>

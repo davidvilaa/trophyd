@@ -65,19 +65,26 @@ export default function ProfileContentPage() {
 
       if (ratingsData && ratingsData.length > 0) {
         let suma = 0;
+        let contadorValidos = 0;
         let counts: Record<number, number> = { 0.5: 0, 1: 0, 1.5: 0, 2: 0, 2.5: 0, 3: 0, 3.5: 0, 4: 0, 4.5: 0, 5: 0 };
 
         ratingsData.forEach((row) => {
           const nota = Number(row.rating);
-          suma += nota;
           
-          const bucket = Math.round(nota * 2) / 2;
-          if (counts[bucket] !== undefined) {
-            counts[bucket] += 1;
+          if (nota > 0) {
+            suma += nota;
+            contadorValidos++;
+            
+            const bucket = Math.round(nota * 2) / 2;
+            if (counts[bucket] !== undefined) {
+              counts[bucket] += 1;
+            }
           }
         });
 
-        setNotaMedia(Number((suma / ratingsData.length).toFixed(1)));
+        const mediaFinal = contadorValidos > 0 ? (suma / contadorValidos) : 0;
+        
+        setNotaMedia(Number(mediaFinal.toFixed(1)));
         setDistribucionNotas(counts);
         setMaxNotaCount(Math.max(...Object.values(counts), 1));
       } else {
@@ -157,35 +164,54 @@ export default function ProfileContentPage() {
           }
         `}</style>
         
-        <fieldset style={{ width: "280px", padding: "20px", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
-          <legend style={{ fontSize: "18px" }}>Ratings</legend>
+        <fieldset style={{ width: "280px", padding: "15px", display: "flex", flexDirection: "column", gap: "25px", backgroundColor: "#fff", border: "1px solid #ccc" }}>
+          <legend style={{ fontSize: "16px", padding: "0 5px" }}>Ratings</legend>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "auto" }}>
-            <div style={{ 
-              display: "flex", alignItems: "flex-end", justifyContent: "space-between", 
-              height: "120px", borderBottom: "0px solid #888", paddingBottom: "2px", gap: "2px"
-            }}>
+          <style>{`
+            .stat-bar {
+              transition: height 0.5s ease-out, background-color 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+              cursor: pointer;
+              position: relative;
+              transform-origin: bottom;
+            }
+            .stat-bar:hover {
+              transform: scaleX(1.15) scaleY(1.1);
+              box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+              z-index: 10;
+            }
+            .stat-bar.rating { background-color: #81c784; }
+            .stat-bar.rating:hover { background-color: #2e7d32; }
+          `}</style>
+
+          <div>
+            <div style={{ textAlign: "center", marginBottom: "15px" }}>
+              <span style={{ fontSize: "12px", color: "#666", textTransform: "uppercase", letterSpacing: "1px" }}>Nota media</span>
+              <div style={{ fontSize: "28px", color: "#111", marginTop: "2px" }}>
+                {notaMedia > 0 ? `${notaMedia.toFixed(1)} ★` : "--"}
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "4px", borderBottom: "1px solid #ccc", paddingBottom: "2px" }}>
               {escalas.map((estrella) => {
                 const heightPercent = maxNotaCount > 0 ? (distribucionNotas[estrella] / maxNotaCount) * 100 : 0;
                 return (
                   <div 
                     key={estrella}
-                    className="rating-bar"
+                    className="stat-bar rating"
                     onClick={() => {
                       if (distribucionNotas[estrella] > 0) {
                         router.push(`/profile/${targetNickname}/games?rating=${estrella}`);
                       }
                     }}
                     style={{ flex: 1, height: `${Math.max(heightPercent, 2)}%` }} 
-                    title={`${estrella} Estrellas: ${distribucionNotas[estrella]} juegos`}
+                    title={`${estrella}★: ${distribucionNotas[estrella]} juegos`}
                   ></div>
                 );
               })}
             </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between"}}>
-              <span style={{ fontSize: "11px", fontWeight: "bold", color: "#666" }}>1☆</span>
-              <span style={{ fontSize: "11px", fontWeight: "bold", color: "#666" }}>5☆</span>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#666", marginTop: "4px" }}>
+              <span>1★</span><span>5★</span>
             </div>
           </div>
         </fieldset>
