@@ -124,11 +124,11 @@ export default function FeedWindow() {
   }, [activeTab, currentUserId]);
 
   return (
-    <Draggable handle=".title-bar" nodeRef={feedRef} defaultPosition={{ x: 50, y: 50 }}>
+    <Draggable handle=".title-bar" nodeRef={feedRef} defaultPosition={{ x: 0, y: 0 }}>
       <div 
         ref={feedRef} 
         className="window glass active" 
-        style={{ width: "450px", position: "absolute", zIndex: 10 }}
+        style={{ width: "400px", position: "absolute", left: "50px", top: "50px", zIndex: 10 }}
       >
         <div className="title-bar" style={{ cursor: "grab" }}>
           <div className="title-bar-text" style={{ display: "flex", alignItems: "center", gap: "5px" }}>

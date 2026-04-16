@@ -1,4 +1,5 @@
 import Feed from "@/components/windows/feed";
+import PlayingNow from "@/components/windows/playingNow";
 import TrendingGames from "@/components/windows/trendingGames";
 import TrendingGuides from "@/components/windows/trendingGuides";
 
@@ -16,6 +17,7 @@ export default function Home() {
         <Feed/>
         <TrendingGuides/>
         <TrendingGames/>
+        <PlayingNow/>
       </main>
     </>
   );

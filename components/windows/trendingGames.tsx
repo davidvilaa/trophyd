@@ -148,11 +148,11 @@ export default function TrendingGamesWindow() {
   }, [allEntries, activeTab]);
 
   return (
-    <Draggable handle=".title-bar" nodeRef={windowRef} defaultPosition={{ x: 550, y: 380 }}>
+    <Draggable handle=".title-bar" nodeRef={windowRef} defaultPosition={{ x: 0, y: 0 }}>
       <div 
         ref={windowRef} 
         className="window glass active" 
-        style={{ width: "600px", position: "absolute", zIndex: 11 }}
+        style={{ width: "600px", position: "absolute", left: "calc(48.5vw - 300px)", top: "420px", zIndex: 11 }}
       >
         <div className="title-bar" style={{ cursor: "grab" }}>
           <div className="title-bar-text" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -188,19 +188,9 @@ export default function TrendingGamesWindow() {
             ))}
           </ul>
           
-          <div style={{ padding: "15px", borderBottom: "1px solid #ccc", backgroundColor: "#fff", backgroundImage: "linear-gradient(to bottom, #fff 0%, #f9fafb 100%)" }}>
-            <h3 style={{ margin: 0, fontSize: "16px", color: "#111", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Trophy size={20} color="#fbbf24" /> 
-              Lo más añadido ({activeTab})
-            </h3>
-            <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#666" }}>
-              Títulos que más jugadores han sumado a su colección {activeTab === "diario" ? "hoy" : activeTab === "semanal" ? "esta semana" : "este mes"}.
-            </p>
-          </div>
-          
           <div style={{ padding: "0" }}>
             {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Escaneando la base de datos... 🔍</div>
+              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando...</div>
             ) : trending.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "12px" }}>
                 No hay actividad reciente para mostrar.
@@ -222,11 +212,6 @@ export default function TrendingGamesWindow() {
               </div>
             )}
           </div>
-        </div>
-        
-        <div className="status-bar" style={{ margin: 0 }}>
-          <p className="status-bar-field">Actualizado en tiempo real</p>
-          <p className="status-bar-field" style={{ textTransform: "capitalize" }}>Periodo: {activeTab}</p>
         </div>
       </div>
     </Draggable>

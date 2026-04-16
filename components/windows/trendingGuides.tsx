@@ -151,11 +151,11 @@ export default function TrendingWindow() {
   }, [allGuides, activeTab]);
 
   return (
-    <Draggable handle=".title-bar" nodeRef={windowRef} defaultPosition={{ x: 550, y: 50 }}>
+    <Draggable handle=".title-bar" nodeRef={windowRef} defaultPosition={{ x: 0, y: 0 }}>
       <div 
         ref={windowRef} 
         className="window glass active" 
-        style={{ width: "600px", position: "absolute", zIndex: 10 }}
+        style={{ width: "600px", position: "absolute", left: "calc(48.5vw - 300px)", top: "50px", zIndex: 10 }}
       >
         <div className="title-bar" style={{ cursor: "grab" }}>
           <div className="title-bar-text" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -216,7 +216,7 @@ export default function TrendingWindow() {
           
           <div style={{ padding: "0" }}>
             {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Buscando las mejores guías... ⏳</div>
+              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>Cargando...</div>
             ) : trending.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "12px" }}>
                 Aún no hay guías destacadas para este periodo.
